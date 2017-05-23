@@ -49,7 +49,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 			$shipping_address = $this->cart_data['billing_address'];
 		}
 		
-		$payment_method_nonce = $_POST['payment_method_nonce'];
+		$payment_method_nonce = $_POST['pp_btree_method_nonce'];
 		
 		//echo "DEBUG :: "."payment_method_nonce = ".$payment_method_nonce."<br />";
 		
@@ -931,7 +931,9 @@ function pp_braintree_enqueue_js() {
 			var clientToken = "<?php echo $clientToken; ?>";
 
 			var form = document.querySelector('.wpsc_checkout_forms');
-	
+			var submit = document.querySelector('.make_purchase.wpsc_buy_button');
+			var nonce = document.querySelector('#pp_btree_method_nonce');
+			
 			braintree.client.create({
 			  authorization: clientToken
 			}, function(err, clientInstance) {
@@ -973,19 +975,32 @@ function pp_braintree_enqueue_js() {
 					placeholder: 'MM/YYYY'
 				  },
 				}
-			  }, function (err, hostedFieldsInstance) {
-				var teardown = function (event) {
-				  event.preventDefault();
-				  alert('Submit your nonce to your server here!');
-				  hostedFieldsInstance.teardown(function () {
-					createHostedFields(clientInstance);
-					form.removeEventListener('submit', teardown, false);
-				  });
-				};
-				
-				form.addEventListener('submit', teardown, false);
-			  });
-			}
+			  }, function (hostedFieldsErr, hostedFieldsInstance) {
+				  if (hostedFieldsErr) {
+					console.error(hostedFieldsErr);
+					return;
+				  }
+
+				  submit.removeAttribute('disabled');
+
+				  form.addEventListener('submit', function (event) {
+					event.preventDefault();
+
+					hostedFieldsInstance.tokenize(function (tokenizeErr, payload) {
+					  if (tokenizeErr) {
+						console.error(tokenizeErr);
+						return;
+					  }
+
+					  // If this was a real integration, this is where you would
+					  // send the nonce to your server.
+					  console.log('Got a nonce: ' + payload.nonce);
+					  document.getElementById('pp_btree_method_nonce').value = payload.nonce;
+					  jQuery(".wpsc_checkout_forms").submit();
+					});
+				  }, false);
+        });
+      };
 		</script>
 	<?php
 }

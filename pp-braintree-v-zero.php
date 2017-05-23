@@ -106,7 +106,7 @@ class WPEC_PP_Braintree_V_Zero {
 
 		<label class="hosted-fields--label" for="cvv">CVV</label>
 		<div id="card-cvv" class="hosted-field"></div>
-		<input type="hidden" id="payment_method_nonce" name="payment_method_nonce" value="" />
+		<input type="hidden" id="pp_btree_method_nonce" name="pp_btree_method_nonce" value="" />
 		<?php
 		$gateway_checkout_form_fields['wpsc_merchant_braintree_v_zero'] = ob_get_clean();
 		}
