@@ -977,7 +977,8 @@ function pp_braintree_enqueue_js() {
 				}
 			  }, function (hostedFieldsErr, hostedFieldsInstance) {
 				  if (hostedFieldsErr) {
-					console.error(hostedFieldsErr);
+					console.error(hostedFieldsErr.code);
+					alert(hostedFieldsErr.code);
 					return;
 				  }
 
@@ -988,7 +989,8 @@ function pp_braintree_enqueue_js() {
 
 					hostedFieldsInstance.tokenize(function (tokenizeErr, payload) {
 					  if (tokenizeErr) {
-						console.error(tokenizeErr);
+						console.error(tokenizeErr.message);
+						alert(tokenizeErr.message);
 						return;
 					  }
 
