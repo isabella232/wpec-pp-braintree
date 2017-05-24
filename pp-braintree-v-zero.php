@@ -96,7 +96,7 @@ class WPEC_PP_Braintree_V_Zero {
 		if ( in_array( 'wpsc_merchant_braintree_v_zero', (array) get_option( 'custom_gateway_options' ) ) ) {
 			ob_start(); 
 		?>
-		
+		<div id="pp_braintree_pp_button"></div>
 		<br>
 		<label class="hosted-fields--label" for="card-number">Card Number</label>
 		<div id="card-number" class="hosted-field"></div>

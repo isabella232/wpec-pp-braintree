@@ -925,14 +925,16 @@ function pp_braintree_enqueue_js() {
 		$clientToken = Braintree_ClientToken::generate();
 	
 		?>	
-		<script src="https://js.braintreegateway.com/web/3.16.0/js/client.js"></script>
-		<script src="https://js.braintreegateway.com/web/3.16.0/js/hosted-fields.js"></script>
+		<script src="https://js.braintreegateway.com/web/3.16.0/js/client.min.js"></script>
+		<script src="https://js.braintreegateway.com/web/3.16.0/js/hosted-fields.min.js"></script>
+		<script src="https://js.braintreegateway.com/web/3.16.0/js/paypal-checkout.min.js"></script>
+		
 		<script type='text/javascript'>
 			var clientToken = "<?php echo $clientToken; ?>";
 
 			var form = document.querySelector('.wpsc_checkout_forms');
 			var submit = document.querySelector('.make_purchase.wpsc_buy_button');
-			var nonce = document.querySelector('#pp_btree_method_nonce');
+			var paypalButton = document.querySelector('#pp_braintree_pp_button');
 			
 			braintree.client.create({
 			  authorization: clientToken
@@ -942,6 +944,7 @@ function pp_braintree_enqueue_js() {
 				return;
 			  }
 			  createHostedFields(clientInstance);
+			  createPayPalCheckout(clientInstance);
 			});
 
 			function createHostedFields(clientInstance) {
@@ -996,13 +999,49 @@ function pp_braintree_enqueue_js() {
 
 					  // If this was a real integration, this is where you would
 					  // send the nonce to your server.
-					  console.log('Got a nonce: ' + payload.nonce);
 					  document.getElementById('pp_btree_method_nonce').value = payload.nonce;
 					  jQuery(".wpsc_checkout_forms").submit();
 					});
 				  }, false);
-        });
-      };
+				});
+			};
+		
+			function createPayPalCheckout(clientInstance) {
+				  braintree.paypalCheckout.create({
+					client: clientInstance
+				  }, function (paypalErr, paypalInstance) {
+					if (paypalErr) {
+					  console.error('Error creating PayPal:', paypalErr);
+					  alert(paypalErr.code);
+					  return;
+					}
+
+					paypalButton.removeAttribute('disabled');
+
+					// When the button is clicked, attempt to tokenize.
+					paypalButton.addEventListener('click', function (event) {
+					  // Because tokenization opens a popup, this has to be called as a result of
+					  // customer action, like clicking a button. You cannot call this at any time.
+					  paypalInstance.tokenize({
+						flow: 'vault'
+						// For more tokenization options, see the full PayPal tokenization documentation
+						// http://braintree.github.io/braintree-web/current/PayPal.html#tokenize
+					  }, function (tokenizeErr, payload) {
+						if (tokenizeErr) {
+						  if (tokenizeErr.type !== 'CUSTOMER') {
+							console.error('Error tokenizing:', tokenizeErr);
+						  }
+						  return;
+						}
+
+						// Tokenization succeeded
+						paypalButton.setAttribute('disabled', true);
+						console.log('Got a nonce! You should submit this to your server.');
+						console.log(payload.nonce);
+					  });
+					}, false);
+				  });
+			};
 		</script>
 	<?php
 }
