@@ -69,7 +69,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 				"lastName" => $billing_address['last_name'],
 				"streetAddress" => $billing_address['address'],
 				"locality" => $billing_address['city'],
-				"region" => $billing_address['state'],
+				"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.billing_region' ), 'code' ),
 				"postalCode" => $billing_address['post_code'],
 				"countryCodeAlpha2" => $billing_address['country']
 			],
@@ -78,7 +78,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 				"lastName" => $shipping_address['last_name'],
 				"streetAddress" => $shipping_address['address'],
 				"locality" => $shipping_address['city'],
-				"region" => $shipping_address['state'],
+				"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.delivery_region' ), 'code' ),
 				"postalCode" => $shipping_address['post_code'],
 				"countryCodeAlpha2" => $shipping_address['country']
 			],
@@ -88,7 +88,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 		));
 		
 		// In theory all error handling should be done on the client side...? 
-		if ($result->success) {			
+		if ($result->success) {
 			// Payment complete
 			wpsc_update_purchase_log_details( $session_id, array( 'processed' => WPSC_Purchase_Log::ACCEPTED_PAYMENT, 'transactid' => $result->transaction->id ), 'sessionid' );
 			
@@ -928,6 +928,7 @@ function pp_braintree_enqueue_js() {
 		<script src="https://js.braintreegateway.com/web/3.16.0/js/client.min.js"></script>
 		<script src="https://js.braintreegateway.com/web/3.16.0/js/hosted-fields.min.js"></script>
 		<script src="https://js.braintreegateway.com/web/3.16.0/js/paypal-checkout.min.js"></script>
+		<script src="https://www.paypalobjects.com/api/checkout.js" data-version-4></script>
 		
 		<script type='text/javascript'>
 			var clientToken = "<?php echo $clientToken; ?>";
@@ -1009,7 +1010,7 @@ function pp_braintree_enqueue_js() {
 			function createPayPalCheckout(clientInstance) {
 				  braintree.paypalCheckout.create({
 					client: clientInstance
-				  }, function (paypalErr, paypalInstance) {
+				  }, function (paypalErr, paypalCheckoutInstance) {
 					if (paypalErr) {
 					  console.error('Error creating PayPal:', paypalErr);
 					  alert(paypalErr.code);
@@ -1017,31 +1018,123 @@ function pp_braintree_enqueue_js() {
 					}
 
 					paypalButton.removeAttribute('disabled');
+					
+					// Set up PayPal with the checkout.js library
+					paypal.Button.render({
+					  env: 'sandbox', // or 'sandbox'
 
-					// When the button is clicked, attempt to tokenize.
-					paypalButton.addEventListener('click', function (event) {
-					  // Because tokenization opens a popup, this has to be called as a result of
-					  // customer action, like clicking a button. You cannot call this at any time.
-					  paypalInstance.tokenize({
-						flow: 'vault'
-						// For more tokenization options, see the full PayPal tokenization documentation
-						// http://braintree.github.io/braintree-web/current/PayPal.html#tokenize
-					  }, function (tokenizeErr, payload) {
-						if (tokenizeErr) {
-						  if (tokenizeErr.type !== 'CUSTOMER') {
-							console.error('Error tokenizing:', tokenizeErr);
+					  payment: function () {
+						return paypalCheckoutInstance.createPayment({
+						  flow: 'checkout', // Required
+						  intent: 'sale',
+						  amount: <?php echo wpsc_cart_total(false); ?>, // Required
+						  currency: '<?php echo wpsc_get_currency_code(); ?>', // Required
+						  locale: 'en_US',
+						  useraction: 'commit',
+						  enableShippingAddress: false,
+						  <?php
+						  if ( wpsc_uses_shipping() ) {
+						  ?>
+						  enableShippingAddress: true,
+						  shippingAddressEditable: false,
+						  shippingAddressOverride: {
+							recipientName: jQuery( 'input[title="billingfirstname"]' ).val() + jQuery( 'input[title="billinglastname"]' ).val(),
+							line1: jQuery( 'textarea[title="billingaddress"]' ).text(),
+							city: jQuery( 'input[title="billingcity"]' ).val(),
+							countryCode: 'US',
+							postalCode: jQuery( 'input[title="billingpostcode"]' ).val(),
+							state: replace_state_code( jQuery( 'input[title="billingstate"]' ).val() ),
 						  }
-						  return;
-						}
+						  <?php
+						  }
+						  ?>
+						});
+					  },
 
-						// Tokenization succeeded
-						paypalButton.setAttribute('disabled', true);
-						console.log('Got a nonce! You should submit this to your server.');
-						console.log(payload.nonce);
-					  });
-					}, false);
+					  onAuthorize: function (data, actions) {
+						return paypalCheckoutInstance.tokenizePayment(data)
+						  .then(function (payload) {
+							// Submit `payload.nonce` to your server
+							paypalButton.setAttribute('disabled', true);
+							console.log(payload.nonce);
+							document.getElementById('pp_btree_method_nonce').value = payload.nonce;
+							jQuery(".wpsc_checkout_forms").submit();
+						  });
+					  },
+
+					  onCancel: function (data) {
+						console.log('checkout.js payment cancelled', JSON.stringify(data, 0, 2));
+					  },
+
+					  onError: function (err) {
+						console.error('checkout.js error', err);
+					  }
+					}, paypalButton).then(function () {
+					  // The PayPal button will be rendered in an html element with the id
+					  // `paypal-button`. This function will be called when the PayPal button
+					  // is set up and ready to be used.
+					});
+
 				  });
 			};
+			
+			function replace_state_code( state ) {
+				var states = {
+					'Alabama':'AL',
+					'Alaska':'AK',
+					'Arizona':'AZ',
+					'Arkansas':'AR',
+					'California':'CA',
+					'Colorado':'CO',
+					'Connecticut':'CT',
+					'Delaware':'DE',
+					'Florida':'FL',
+					'Georgia':'GA',
+					'Hawaii':'HI',
+					'Idaho':'ID',
+					'Illinois':'IL',
+					'Indiana':'IN',
+					'Iowa':'IA',
+					'Kansas':'KS',
+					'Kentucky':'KY',
+					'Louisiana':'LA',
+					'Maine':'ME',
+					'Maryland':'MD',
+					'Massachusetts':'MA',
+					'Michigan':'MI',
+					'Minnesota':'MN',
+					'Mississippi':'MS',
+					'Missouri':'MO',
+					'Montana':'MT',
+					'Nebraska':'NE',
+					'Nevada':'NV',
+					'New Hampshire':'NH',
+					'New Jersey':'NJ',
+					'New Mexico':'NM',
+					'New York':'NY',
+					'North Carolina':'NC',
+					'North Dakota':'ND',
+					'Ohio':'OH',
+					'Oklahoma':'OK',
+					'Oregon':'OR',
+					'Pennsylvania':'PA',
+					'Rhode Island':'RI',
+					'South Carolina':'SC',
+					'South Dakota':'SD',
+					'Tennessee':'TN',
+					'Texas':'TX',
+					'Utah':'UT',
+					'Vermont':'VT',
+					'Virginia':'VA',
+					'Washington':'WA',
+					'West Virginia':'WV',
+					'Wisconsin':'WI',
+					'Wyoming':'WY'
+	
+				};
+				
+				return states[state];
+			}
 		</script>
 	<?php
 }
