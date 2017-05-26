@@ -107,6 +107,18 @@ class WPEC_PP_Braintree_V_Zero {
 		<label class="hosted-fields--label" for="cvv">CVV</label>
 		<div id="card-cvv" class="hosted-field"></div>
 		<input type="hidden" id="pp_btree_method_nonce" name="pp_btree_method_nonce" value="" />
+		
+		<div id="pp-btree-hosted-fields-modal" class="pp-btree-hosted-fields-modal-hidden" tabindex="-1">
+		  <div class="pp-btree-hosted-fields-bt-mask"></div>
+		  <div class="pp-btree-hosted-fields-bt-modal-frame">
+			<div class="pp-btree-hosted-fields-bt-modal-header">
+			  <div class="header-text">Authentication</div>
+			</div>
+			<div class="pp-btree-hosted-fields-bt-modal-body"></div>
+			<div class="pp-btree-hosted-fields-bt-modal-footer"><a id="pp-btree-hosted-fields-text-close" href="#">Cancel</a></div>
+		  </div>
+		</div>
+		
 		<?php
 		$gateway_checkout_form_fields['wpsc_merchant_braintree_v_zero'] = ob_get_clean();
 		}

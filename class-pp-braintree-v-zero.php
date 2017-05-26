@@ -23,7 +23,8 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 	 * submit method, sends the received data to the payment gateway
 	 * @access public
 	 */
-	function submit() {
+	public function submit() {
+		global $braintree_settings;
 
 		setBraintreeConfiguration();
 
@@ -52,6 +53,11 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 		$payment_method_nonce = $_POST['pp_btree_method_nonce'];
 		
 		//echo "DEBUG :: "."payment_method_nonce = ".$payment_method_nonce."<br />";
+		if ($braintree_settings['settlement_type'] == 'upfront') {
+			$submit_for_settlement = true;
+		} else {
+			$submit_for_settlement = false;
+		}
 		
 		// Create a sale transaction with Braintree
 		$result = Braintree_Transaction::sale(array(
@@ -83,7 +89,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 				"countryCodeAlpha2" => $shipping_address['country']
 			],
 			"options" => [
-				"submitForSettlement" => true,
+				"submitForSettlement" => $submit_for_settlement,
 			]
 		));
 		
@@ -249,25 +255,7 @@ function form_braintree_v_zero() {
 								</select>
 							</td>
 						</tr>
-						<tr>
-							<td colspan="2">
-								<h4>Card Payments</h4>
-							</td>
-						</tr>
-						<tr>
-							<td>
-								Display As
-							</td>
-							<td>
-								<input id="braintree_card_payments_display_as_hosted_fields" class="braintree_card_payments_display_as" type="radio" name="wpsc_options[braintree_card_payments_display_as]" value="hosted_fields"';
-								if (get_option( 'braintree_card_payments_display_as' ) == 'hosted_fields') { 
-									$output .= ' checked="checked"';
-								} elseif (get_option( 'braintree_card_payments_display_as' ) == '') { 
-									$output .= ' checked="checked"';
-								}
-	$output .=					' />
-								Hosted Fields
-							</td>
+
 						</tr>
 						<tr id="hostedFieldsOptions">
 							<td>
@@ -706,7 +694,7 @@ function getMerchantCurrencies() {
  * Setup the Braintree configuration
  */
 function setBraintreeConfiguration() {
-	global $merchant_currency;
+	global $merchant_currency, $braintree_settings;
 
 	require_once( 'braintree/lib/Braintree.php' );
 	
@@ -919,42 +907,146 @@ function displayBraintreeRefundForm() {
 
 function pp_braintree_enqueue_js() {
 	global $merchant_currency;
-	
+		$braintree_threedee_secure = get_option( 'braintree_threedee_secure' );
+		$braintree_threedee_secure_only = get_option( 'braintree_threedee_secure_only' );
+
 		setBraintreeConfiguration();
-		
 		$clientToken = Braintree_ClientToken::generate();
-	
-		?>	
+
+		if ( $braintree_threedee_secure == 'on' ) {
+			echo '
+			<style>
+			#pp-btree-hosted-fields-modal {
+			  position: absolute;
+			  top: 0;
+			  left: 0;
+			  display: flex;
+			  align-items: center;
+			  height: 100vh;
+			  z-index: 100;
+			}
+			
+			.pp-btree-hosted-fields-modal-hidden {
+				display: none !important;
+			}
+
+			.pp-btree-hosted-fields-bt-modal-frame {
+			  height: 480px;
+			  width: 440px;
+			  margin: auto;
+			  background-color: #eee;
+			  z-index: 2;
+			  border-radius: 6px;
+			}
+
+			.pp-btree-hosted-fields-bt-modal-body {
+			  height: 400px;
+			  margin: 0 20px;
+			  background-color: white;
+			  border: 1px solid lightgray;
+			}
+
+			.pp-btree-hosted-fields-bt-modal-header, .pp-btree-hosted-fields-bt-modal-footer {
+			  height: 40px;
+			  text-align: center;
+			  line-height: 40px;
+			}
+
+			.pp-btree-hosted-fields-bt-mask {
+			  position: fixed;
+			  top: 0;
+			  left: 0;
+			  height: 100%;
+			  width: 100%;
+			  background-color: black;
+			  opacity: 0.8;
+			}
+			</style>';
+		}
+
+		?>
 		<script src="https://js.braintreegateway.com/web/3.16.0/js/client.min.js"></script>
 		<script src="https://js.braintreegateway.com/web/3.16.0/js/hosted-fields.min.js"></script>
 		<script src="https://js.braintreegateway.com/web/3.16.0/js/paypal-checkout.min.js"></script>
 		<script src="https://www.paypalobjects.com/api/checkout.js" data-version-4></script>
+		<script src="https://js.braintreegateway.com/web/3.16.0/js/three-d-secure.min.js"></script>
 		
 		<script type='text/javascript'>
-			var clientToken = "<?php echo $clientToken; ?>";
+			if ( jQuery( 'input[name=\"custom_gateway\"]' ).val() === 'wpsc_merchant_braintree_v_zero' ) {
+				var clientToken = "<?php echo $clientToken; ?>";
+				var components = {
+				  client: null,
+				  threeDSecure: null,
+				  hostedFields: null,
+				  paypalCheckout: null,
+				};
+				var my3DSContainer;
+				
+				var modal = document.getElementById('pp-btree-hosted-fields-modal');
+				var bankFrame = document.querySelector('.pp-btree-hosted-fields-bt-modal-body');
+				var closeFrame = document.getElementById('pp-btree-hosted-fields-text-close');
+				var form = document.querySelector('.wpsc_checkout_forms');
+				var submit = document.querySelector('.make_purchase.wpsc_buy_button');
+				var paypalButton = document.querySelector('#pp_braintree_pp_button');
 
-			var form = document.querySelector('.wpsc_checkout_forms');
-			var submit = document.querySelector('.make_purchase.wpsc_buy_button');
-			var paypalButton = document.querySelector('#pp_braintree_pp_button');
+				braintree.client.create({
+				  authorization: clientToken
+				}, function(err, clientInstance) {
+				  if (err) {
+					console.error(err);
+					return;
+				  }
+				  
+				  components.client = clientInstance;
+
+				  createHostedFields(clientInstance);
+				  create3DSecure( clientInstance );
+				  createPayPalCheckout(clientInstance );
+				});
+			}
+
+			function create3DSecure( clientInstance ) {
+				// DO 3DS
+				<?php if ( $braintree_threedee_secure == 'on' ) { ?>
+
+					braintree.threeDSecure.create({
+						client:  clientInstance
+					}, function (threeDSecureErr, threeDSecureInstance) {
+						if (threeDSecureErr) {
+						  // Handle error in 3D Secure component creation
+						  console.error('error in 3D Secure component creation');
+						  return;
+						}
+						components.threeDSecure = threeDSecureInstance;
+					});
+				<?php } ?>
+			}
+
+			function addFrame(err, iframe) {
+				// Set up your UI and add the iframe.
+				bankFrame.appendChild(iframe);
+				modal.classList.remove('pp-btree-hosted-fields-modal-hidden');
+				modal.focus();
+			}
+
+			function removeFrame() {
+				var iframe = bankFrame.querySelector('iframe');
+				modal.classList.add('pp-btree-hosted-fields-modal-hidden');
+				iframe.parentNode.removeChild(iframe);
+				submit.removeAttribute('disabled');
+			}
 			
-			braintree.client.create({
-			  authorization: clientToken
-			}, function(err, clientInstance) {
-			  if (err) {
-				console.error(err);
-				return;
-			  }
-			  createHostedFields(clientInstance);
-			  createPayPalCheckout(clientInstance);
+			closeFrame.addEventListener('click', function () {
+			  components.threeDSecure.cancelVerifyCard(removeFrame());
 			});
 
-			function createHostedFields(clientInstance) {
-			  braintree.hostedFields.create({
+			function createHostedFields( clientInstance ) {
+			braintree.hostedFields.create({
 				client: clientInstance,
 				styles: {
 				  'input': {
-					'font-size': '16px',
-					'font-family': 'courier, monospace',
+					'font-size': '14px',
+					'font-family': 'monospace',
 					'font-weight': 'lighter',
 					'color': '#ccc'
 				  },
@@ -979,35 +1071,86 @@ function pp_braintree_enqueue_js() {
 					placeholder: 'MM/YYYY'
 				  },
 				}
-			  }, function (hostedFieldsErr, hostedFieldsInstance) {
-				  if (hostedFieldsErr) {
+			}, function (hostedFieldsErr, hostedFieldsInstance) {
+				if (hostedFieldsErr) {
 					console.error(hostedFieldsErr.code);
 					alert(hostedFieldsErr.code);
 					return;
-				  }
+				}
 
-				  submit.removeAttribute('disabled');
+				components.hostedFields = hostedFieldsInstance;
+				  
+				submit.removeAttribute('disabled');
 
-				  form.addEventListener('submit', function (event) {
+				form.addEventListener('submit', function (event) {
 					event.preventDefault();
 
-					hostedFieldsInstance.tokenize(function (tokenizeErr, payload) {
-					  if (tokenizeErr) {
-						console.error(tokenizeErr.message);
-						alert(tokenizeErr.message);
-						return;
-					  }
+					components.hostedFields.tokenize(function (tokenizeErr, payload) {
+						if (tokenizeErr) {
+							console.error(tokenizeErr.message);
+							alert(tokenizeErr.message);
+							return;
+						}
 
-					  // If this was a real integration, this is where you would
-					  // send the nonce to your server.
-					  document.getElementById('pp_btree_method_nonce').value = payload.nonce;
-					  jQuery(".wpsc_checkout_forms").submit();
+						if ( components.threeDSecure ) {
+							components.threeDSecure.verifyCard({
+								amount: <?php echo wpsc_cart_total(false); ?>,
+								nonce: payload.nonce,
+								addFrame: addFrame,
+								removeFrame: removeFrame
+								}, function (err, response) {
+									// Handle response
+									if (!err) {
+									
+										var liabilityShifted = response.liabilityShifted; // true || false
+										var liabilityShiftPossible =  response.liabilityShiftPossible; // true || false
+
+										if (liabilityShifted) {
+											// The 3D Secure payment was successful so proceed with this nonce
+											document.getElementById('pp_btree_method_nonce').value = response.nonce;
+											jQuery(".wpsc_checkout_forms").submit();
+										} else {
+											// The 3D Secure payment failed an initial check so check whether liability shift is possible
+											if (liabilityShiftPossible) {
+												// LiabilityShift is possible so proceed with this nonce
+												document.getElementById('pp_btree_method_nonce').value = response.nonce;
+												jQuery(".wpsc_checkout_forms").submit();
+											} else {
+												<?php if ( $braintree_threedee_secure_only == 'on' ) { ?>
+													// Check whether the 3D Secure check has to be passed to proceeed. If so then show an error
+												  console.error('There was a problem with your payment verification');
+												  alert('There was a problem with your payment verification');
+												  return;
+												  <?php
+												} else { ?>
+													// ...and if not just proceed with this nonce
+													document.getElementById('pp_btree_method_nonce').value = response.nonce;
+													jQuery(".wpsc_checkout_forms").submit();
+												<?php } ?>
+											}
+										}
+										
+										// 3D Secure finished. Using response.nonce you may proceed with the transaction with the associated server side parameters below.
+										document.getElementById('pp_btree_method_nonce').value = response.nonce;
+										jQuery(".wpsc_checkout_forms").submit();
+
+									} else {
+										// Handle errors
+										console.log('verification error:', err);
+										return;
+									}
+								});
+							} else {
+								// send the nonce to your server.
+								document.getElementById('pp_btree_method_nonce').value = payload.nonce;
+								jQuery(".wpsc_checkout_forms").submit();
+							}
 					});
-				  }, false);
-				});
-			};
-		
-			function createPayPalCheckout(clientInstance) {
+				}, false);
+			});
+		};
+
+			function createPayPalCheckout( clientInstance ) {
 				  braintree.paypalCheckout.create({
 					client: clientInstance
 				  }, function (paypalErr, paypalCheckoutInstance) {
@@ -1016,15 +1159,17 @@ function pp_braintree_enqueue_js() {
 					  alert(paypalErr.code);
 					  return;
 					}
+					
+					components.paypalCheckout = paypalCheckoutInstance;
 
 					paypalButton.removeAttribute('disabled');
-					
+
 					// Set up PayPal with the checkout.js library
 					paypal.Button.render({
 					  env: 'sandbox', // or 'sandbox'
 
 					  payment: function () {
-						return paypalCheckoutInstance.createPayment({
+						return components.paypalCheckout.createPayment({
 						  flow: 'checkout', // Required
 						  intent: 'sale',
 						  amount: <?php echo wpsc_cart_total(false); ?>, // Required
@@ -1052,11 +1197,10 @@ function pp_braintree_enqueue_js() {
 					  },
 
 					  onAuthorize: function (data, actions) {
-						return paypalCheckoutInstance.tokenizePayment(data)
+						return components.paypalCheckout.tokenizePayment(data)
 						  .then(function (payload) {
 							// Submit `payload.nonce` to your server
 							paypalButton.setAttribute('disabled', true);
-							console.log(payload.nonce);
 							document.getElementById('pp_btree_method_nonce').value = payload.nonce;
 							jQuery(".wpsc_checkout_forms").submit();
 						  });
