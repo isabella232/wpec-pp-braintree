@@ -257,59 +257,6 @@ function form_braintree_v_zero() {
 						</tr>
 
 						</tr>
-						<tr id="hostedFieldsOptions">
-							<td>
-								' . __( 'Hosted Fields Options', 'wp-e-commerce' ) . '
-							</td>
-							<td>
-								<input id="braintree_hosted_fields_options" type="radio" name="wpsc_options[braintree_hosted_fields_options]" value="combined_exp_date"';
-								if (get_option( 'braintree_hosted_fields_options' ) == 'combined_exp_date') { 
-									$output .= ' checked="checked"';
-								}
-	$output .=					' />
-								Combined Expiry Date Field
-								<br />
-								<input id="braintree_hosted_fields_options" type="radio" name="wpsc_options[braintree_hosted_fields_options]" value="separate_exp_date"';
-								if (get_option( 'braintree_hosted_fields_options' ) == 'separate_exp_date') { 
-									$output .= ' checked="checked"';
-								} elseif (get_option( 'braintree_hosted_fields_options' ) == '') { 
-									$output .= ' checked="checked"';
-								}
-	$output .=					' />
-								Separete Expiry Date Fields
-							</td>
-						</tr>
-						<tr id="hostedFieldsCss">
-							<td>
-								Hosted Fields CSS
-							</td>
-							<td>
-								If you want to customise the styling of your hosted fields then add the CSS here. The different HTML elements and their IDs are as follows:
-								<br />
-								<ul>
-									<li>
-										Card Number: #card-number
-									</li>
-									<li>
-										Card Expiry Date (Combined Date Fields): #card-exp
-									</li>
-									<li>
-										Card Expiry Month (Separate Date Fields): #card-exp-month
-									</li>
-									<li>
-										Card Expiry Year (Separate Date Fields): #card-exp-year
-									</li>
-									<li>
-										Card CVV: #card-cvv
-									</li>
-									<li>
-										Submit button: #submitHostedFields
-									</li>
-								</ul>
-								<br />
-								<textarea id="braintree_hosted_fields_css" name="wpsc_options[braintree_hosted_fields_css]">' . get_option( 'braintree_hosted_fields_css' ) . '</textarea>
-							</td>
-						</tr>
 						<tr>
 							<td>
 								3-D Secure
@@ -336,38 +283,6 @@ function form_braintree_v_zero() {
 	$output .=					' />
 								' . __( 'Checking this option will only accept card transactions if compatible with the 3-DS verification protocol.', 'wp-e-commerce' ).'
 								<input id="braintree_threedee_secure_only" type="hidden" name="wpsc_options[braintree_threedee_secure_only]" value="' . get_option( 'braintree_threedee_secure_only' ) .'">
-							</td>
-						</tr>
-						<tr>
-							<td colspan="2">
-								<h4>PayPal Payments</h4>
-							</td>
-						</tr>
-						<tr>
-							<td>
-								Display As
-							</td>
-							<td>
-								<input id="braintree_paypal_payments_display_as" type="radio" name="wpsc_options[braintree_paypal_payments_display_as]" value="drop_in_ui"';
-								if (get_option( 'braintree_paypal_payments_display_as' ) == 'drop_in_ui') { 
-									$output .= ' checked="checked"';
-								} elseif (get_option( 'braintree_paypal_payments_display_as' ) == '') { 
-									$output .= ' checked="checked"';
-								} else { 
-									$output .= ' checked="checked"';
-								}
-	$output .=					' />
-								Drop-in UI';
-	/*										
-								<br />
-								<input id="braintree_paypal_payments_display_as" type="radio" name="wpsc_options[braintree_paypal_payments_display_as]" value="custom"';
-								if (get_option( 'braintree_paypal_payments_display_as' ) == 'custom') { 
-									$output .= ' checked="checked"';
-								}
-	$output .=					' />
-								Custom
-	*/
-	$output .= '
 							</td>
 						</tr>
 						<script type="text/javascript">
@@ -471,28 +386,8 @@ function form_braintree_v_zero() {
 									} else {
 										jQuery("#braintree_threedee_secure_only").val("off");
 									}
-								});
-								
-								jQuery(".braintree_card_payments_display_as").click(function() {
-									if (jQuery(this).val() == "hosted_fields") {
-										jQuery("#hostedFieldsOptions").show();
-										jQuery("#hostedFieldsCss").show();
-									} else {
-										jQuery("#hostedFieldsOptions").hide();
-										jQuery("#hostedFieldsCss").hide();
-									}
 								});';
-		
-	if (get_option( 'braintree_card_payments_display_as' ) == 'hosted_fields') {
-		$output .= '
-								jQuery("#hostedFieldsOptions").show();
-								jQuery("#hostedFieldsCss").show();';
-	} else {
-		$output .= '
-								jQuery("#hostedFieldsOptions").hide();
-								jQuery("#hostedFieldsCss").hide();';
-	}
-		
+
 	$output .= '
 							});
 						</script>';
