@@ -13,10 +13,10 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 class WPEC_PP_Braintree_V_Zero {
 	private static $instance;
-		
+
 	public function __construct() {
 	}
-	
+
 	public static function get_instance() {
 
 		if  ( ! isset( self::$instance ) && ! ( self::$instance instanceof WPEC_PP_Braintree_V_Zero ) ) {
@@ -30,7 +30,7 @@ class WPEC_PP_Braintree_V_Zero {
 	}	
 
 	public static function define_constants() {
-		
+
 		if ( ! defined( 'WPEC_PPBRAINTREE_VZERO_PLUGIN_DIR' ) ) {
 			define( 'WPEC_PPBRAINTREE_VZERO_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 		}
@@ -47,14 +47,13 @@ class WPEC_PP_Braintree_V_Zero {
 			define( 'WPEC_PPBRAINTREE_VZERO_VERSION', '1.0.0' );
 		}
 	}
-	
+
 	public static function includes() {
 	}
 
 	public static function add_actions() {
 		add_action( 'wpsc_init', array( self::$instance, 'init' ), 2 );
 		add_action( 'wpsc_init', array( self::$instance, 'pp_braintree_checkout_fields' ) );
-		
 	}
 
 	public static function add_filters() {
@@ -81,7 +80,7 @@ class WPEC_PP_Braintree_V_Zero {
 			'form'            => 'form_braintree_v_zero',
 			'internalname'    => 'wpsc_merchant_braintree_v_zero'
 		);
-		
+
 		$image = apply_filters( 'wpsc_merchant_image', '', $gateways[$num]['internalname'] );
 		if ( ! empty( $image ) ) {
 			$gateways[$num]['image'] = $image;
@@ -89,40 +88,42 @@ class WPEC_PP_Braintree_V_Zero {
 
 		return $gateways;
 	}
-	
+
 	public function pp_braintree_checkout_fields() {
 		global $gateway_checkout_form_fields;
 
 		if ( in_array( 'wpsc_merchant_braintree_v_zero', (array) get_option( 'custom_gateway_options' ) ) ) {
 			ob_start(); 
-		?>
-		<div id="pp_braintree_pp_button"></div>
-		<br>
-		<label class="hosted-fields--label" for="card-number">Card Number</label>
-		<div id="card-number" class="hosted-field"></div>
 
-		<label class="hosted-fields--label" for="expiration-date">Expiration Date</label>
-		<div id="card-exp" class="hosted-field"></div>
+		if ( (bool) get_option( 'bt_vzero_pp_payments' ) == true ) {
+			echo '<div id="pp_braintree_pp_button"></div>';
+		}
 
-		<label class="hosted-fields--label" for="cvv">CVV</label>
-		<div id="card-cvv" class="hosted-field"></div>
-		<input type="hidden" id="pp_btree_method_nonce" name="pp_btree_method_nonce" value="" />
-		
-		<div id="pp-btree-hosted-fields-modal" class="pp-btree-hosted-fields-modal-hidden" tabindex="-1">
-		  <div class="pp-btree-hosted-fields-bt-mask"></div>
-		  <div class="pp-btree-hosted-fields-bt-modal-frame">
-			<div class="pp-btree-hosted-fields-bt-modal-header">
-			  <div class="header-text">Authentication</div>
-			</div>
-			<div class="pp-btree-hosted-fields-bt-modal-body"></div>
-			<div class="pp-btree-hosted-fields-bt-modal-footer"><a id="pp-btree-hosted-fields-text-close" href="#">Cancel</a></div>
-		  </div>
-		</div>
-		
-		<?php
+		if ( (bool) get_option( 'bt_vzero_cc_payments' ) == true ) {
+			echo '<br>
+				<label class="hosted-fields--label" for="card-number">Card Number</label>
+				<div id="card-number" class="hosted-field"></div>
+
+				<label class="hosted-fields--label" for="expiration-date">Expiration Date</label>
+					<div id="card-exp" class="hosted-field"></div>
+				<label class="hosted-fields--label" for="cvv">CVV</label>
+					<div id="card-cvv" class="hosted-field"></div>
+					<input type="hidden" id="pp_btree_method_nonce" name="pp_btree_method_nonce" value="" />
+				
+				<div id="pp-btree-hosted-fields-modal" class="pp-btree-hosted-fields-modal-hidden" tabindex="-1">
+					<div class="pp-btree-hosted-fields-bt-mask"></div>
+						<div class="pp-btree-hosted-fields-bt-modal-frame">
+							<div class="pp-btree-hosted-fields-bt-modal-header">
+								<div class="header-text">Authentication</div>
+							</div>
+							<div class="pp-btree-hosted-fields-bt-modal-body"></div>
+							<div class="pp-btree-hosted-fields-bt-modal-footer"><a id="pp-btree-hosted-fields-text-close" href="#">Cancel</a></div>
+					  </div>
+				</div>';
+		}
+
 		$gateway_checkout_form_fields['wpsc_merchant_braintree_v_zero'] = ob_get_clean();
 		}
 	}
 }
-
 add_action( 'wpsc_pre_init', 'WPEC_PP_Braintree_V_Zero::get_instance' );

@@ -117,294 +117,262 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 	}
 }
 
-/**
- * Creates the Briantree configuration form in the admin section 
- * @return string
- */
-function form_braintree_v_zero() {
-	
-	$output = '
-						<tr>
-							<td>
-								Sandbox Mode
-							</td>
-							<td>
-								<input id="braintree_sandbox_mode_check" type="checkbox"';
-								if (get_option( 'braintree_sandbox_mode' ) == 'on') { 
-									$output .= ' checked="checked"';
-								}
-	$output .=					' />
-								' . __( 'Check to run the plugin in sandbox mode.', 'wp-e-commerce' ).'
-								<input id="braintree_sandbox_mode" type="hidden" name="wpsc_options[braintree_sandbox_mode]" value="on">
-							</td>
-						</tr>
-						<tr>
-							<td colspan="2">
-								<h4>Sandbox Settings</h4>
-							</td>
-						</tr>
-						<tr>
-							<td>
-								Sandbox Public Key
-							</td>
-							<td>
-								<input class="braintree-error" id="braintree_sandbox_public_key" type="text" name="wpsc_options[braintree_sandbox_public_key]" value="' . get_option( 'braintree_sandbox_public_key' ) . '" />
-								<span id="braintree_sandbox_public_key_errors" style="color: red"></span>
-							</td>
-						</tr>
-						<tr>
-							<td>
-								Sandbox Private Key
-							</td>
-							<td>
-								<input id="braintree_sandbox_private_key" type="text" name="wpsc_options[braintree_sandbox_private_key]" value="' . get_option( 'braintree_sandbox_private_key' ) . '" />
-								<span id="braintree_sandbox_private_key_errors" style="color: red"></span>
-							</td>
-						</tr>
-						<tr>
-							<td>
-								Sandbox Merchant ID
-							</td>
-							<td id="sandboxMerchantIds">
-								<input id="braintree_sandbox_merchant_id" type="text" name="wpsc_options[braintree_sandbox_merchant_id]" value="' . get_option( 'braintree_sandbox_merchant_id' ) . '" />
-								<select id="braintree_merchant_currency" name="wpsc_options[braintree_sandbox_merchant_currency]">
-									<option value=""></option>';
-		
-		$merchant_currencies = getMerchantCurrencies();
-		
-		foreach ($merchant_currencies as $merchant_currency) {
-			$output .= '<option value="'.$merchant_currency['currency'].'"';	
-			if (get_option( 'braintree_sandbox_merchant_currency' ) === $merchant_currency['currency']) {
-				$output .= ' selected';
-			}
-			$output .= '>'.$merchant_currency['currency'].' - '.$merchant_currency['currency_label'].'</option>';			
-		}
-		
-		$output .= '
-								</select>
-								<span id="braintree_sandbox_merchant_id_errors" style="color: red"></span>
-								<span id="braintree_merchant_currency_errors" style="color: red"></span>
-							</td>
-						</tr>
-						<tr>
-							<td colspan="2">
-								<h4>Production Settings</h4>
-							</td>
-						</tr>
-						<tr>
-							<td>
-								Production Public Key
-							</td>
-							<td>
-								<input id="braintree_production_public_key" type="text" name="wpsc_options[braintree_production_public_key]" value="' . get_option( 'braintree_production_public_key' ) . '" />
-								<span id="braintree_production_public_key_errors" style="color: red"></span>
-							</td>
-						</tr>
-						<tr>
-							<td>
-								Production Private Key
-							</td>
-							<td>
-								<input id="braintree_production_private_key" type="text" name="wpsc_options[braintree_production_private_key]" value="' . get_option( 'braintree_production_private_key' ) . '" />
-								<span id="braintree_production_private_key_errors" style="color: red"></span>
-							</td>
-						</tr>
-						<tr>
-							<td>
-								Production Merchant ID
-							</td>
-							<td id="productionMerchantIds">
-								<input id="braintree_production_merchant_id" type="text" name="wpsc_options[braintree_production_merchant_id]" value="' . get_option( 'braintree_production_merchant_id' ) . '" />
-								<select id="braintree_merchant_currency" name="wpsc_options[braintree_production_merchant_currency]">
-									<option value=""></option>';
-		
-		$merchant_currencies = getMerchantCurrencies();
-		
-		foreach ($merchant_currencies as $merchant_currency) {
-			$output .= '<option value="'.$merchant_currency['currency'].'"';	
-			if (get_option( 'braintree_sandbox_merchant_currency' ) === $merchant_currency['currency']) {
-				$output .= ' selected';
-			}
-			$output .= '>'.$merchant_currency['currency'].' - '.$merchant_currency['currency_label'].'</option>';		
-		}
-		
-		$output .= '
-								</select>
-								<span id="braintree_production_merchant_id_errors" style="color: red"></span>
-								<span id="braintree_merchant_currency_errors" style="color: red"></span>
-							</td>
-						</tr>
-						<tr>
-							<td>
-								Settlement Type
-							</td>
-							<td>
-								<select id="braintree_settlement_type" name="wpsc_options[braintree_settlement_type]">
-									<option value="upfront"';
-	
-					if (get_option( 'braintree_settlement_type' ) === 'upfront')
-						$output .= ' selected'; 
-					
-					$output .=		'>Upfront Settlement</option>
-									<option value="deferred"';
-					
-					if (get_option( 'braintree_settlement_type' ) === 'deferred')
-						$output .= ' selected'; 
-					
-					$output .=		'>Deferred Settlement</option>
-								</select>
-							</td>
-						</tr>
-
-						</tr>
-						<tr>
-							<td>
-								3-D Secure
-							</td>
-							<td>
-								<input id="braintree_threedee_secure_check" type="checkbox"';
-								if (get_option( 'braintree_threedee_secure' ) == 'on') { 
-									$output .= ' checked="checked"';
-								}
-	$output .=					' />
-								' . __( 'Checking this option processes card transactions through the 3-DS verification protocol.', 'wp-e-commerce' ).'
-								<input id="braintree_threedee_secure" type="hidden" name="wpsc_options[braintree_threedee_secure]" value="' . get_option( 'braintree_threedee_secure' ) .'">
-							</td>
-						</tr>
-						<tr>
-							<td>
-								3-D Secure Only
-							</td>
-							<td>
-								<input id="braintree_threedee_secure_only_check" type="checkbox"';
-								if (get_option( 'braintree_threedee_secure_only' ) == 'on') { 
-									$output .= ' checked="checked"';
-								}
-	$output .=					' />
-								' . __( 'Checking this option will only accept card transactions if compatible with the 3-DS verification protocol.', 'wp-e-commerce' ).'
-								<input id="braintree_threedee_secure_only" type="hidden" name="wpsc_options[braintree_threedee_secure_only]" value="' . get_option( 'braintree_threedee_secure_only' ) .'">
-							</td>
-						</tr>
-						<script type="text/javascript">
-								
-							jQuery(function() {
+	/**
+	 * Creates the Briantree configuration form in the admin section 
+	 * @return string
+	 */
+	function form_braintree_v_zero() {
+		$output = '
+							<tr>
+								<td>
+									Sandbox Mode
+								</td>
+								<td>
+									<label><input ' . checked( 'on', get_option( 'braintree_sandbox_mode' ), false ) . ' type="radio" name="wpsc_options[braintree_sandbox_mode]" value="on" /> Yes</label>&nbsp;&nbsp;&nbsp;
+									<label><input ' . checked( 'off', get_option( 'braintree_sandbox_mode' ), false ) . ' type="radio" name="wpsc_options[braintree_sandbox_mode]" value="off" /> No</label>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<h4>Sandbox Settings</h4>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									Sandbox Public Key
+								</td>
+								<td>
+									<input class="braintree-error" id="braintree_sandbox_public_key" type="text" name="wpsc_options[braintree_sandbox_public_key]" value="' . get_option( 'braintree_sandbox_public_key' ) . '" />
+									<span id="braintree_sandbox_public_key_errors" style="color: red"></span>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									Sandbox Private Key
+								</td>
+								<td>
+									<input id="braintree_sandbox_private_key" type="text" name="wpsc_options[braintree_sandbox_private_key]" value="' . get_option( 'braintree_sandbox_private_key' ) . '" />
+									<span id="braintree_sandbox_private_key_errors" style="color: red"></span>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									Sandbox Merchant ID
+								</td>
+								<td id="sandboxMerchantIds">
+									<input id="braintree_sandbox_merchant_id" type="text" name="wpsc_options[braintree_sandbox_merchant_id]" value="' . get_option( 'braintree_sandbox_merchant_id' ) . '" />
+									<select id="braintree_merchant_currency" name="wpsc_options[braintree_sandbox_merchant_currency]">
+										<option value=""></option>';
 			
-								jQuery(".edit-payment-module-update").click(function(e) {
-									
-									var is_errors = false;
-									
-									// Validate Sanbox account details
-									if (jQuery("#braintree_sandbox_public_key").val() == "") {
-										jQuery("#braintree_sandbox_public_key_errors").html("<br/> You have not entered a Sandbox Public Key.");
-										jQuery("#braintree_sandbox_public_key").focus();
-										is_errors = true;
-									} else {
-										jQuery("#braintree_sandbox_public_key_errors").html("");
-									}
-									
-									if (jQuery("#braintree_sandbox_private_key").val() == "") {
-										jQuery("#braintree_sandbox_private_key_errors").html("<br/> You have not entered a Sandbox Private Key.");
-										jQuery("#braintree_sandbox_private_key").focus();
-										is_errors = true;
-									} else {
-										jQuery("#braintree_sandbox_private_key_errors").html("");
-									}
-									
-									if (jQuery("#braintree_sandbox_merchant_id").val() == "") {
-										jQuery("#braintree_sandbox_merchant_id_errors").html("<br/> You have not entered a Sandbox Merchant ID.");
-										jQuery("#braintree_sandbox_merchant_id").focus();
-										is_errors = true;
-									} else {
-										jQuery("#braintree_sandbox_merchant_id_errors").html("");
-									}
-									
-									if (jQuery("#braintree_merchant_currency").val() == "") {
-										jQuery("#braintree_merchant_currency_errors").html("<br/> You have not selcetd a Sandbox Currency.");
-										jQuery("#braintree_merchant_currency").focus();
-										is_errors = true;
-									} else {
-										jQuery("#braintree_merchant_currency_errors").html("");
-									}
-									
-									// Validate Production account details
-									if (jQuery("#braintree_production_public_key").val() == "") {
-										jQuery("#braintree_production_public_key_errors").html("<br/> You have not entered a Production Public Key.");
-										jQuery("#braintree_production_public_key").focus();
-										is_errors = true;
-									} else {
-										jQuery("#braintree_production_public_key_errors").html("");
-									}
-									
-									if (jQuery("#braintree_production_private_key").val() == "") {
-										jQuery("#braintree_production_private_key_errors").html("<br/> You have not entered a Production Private Key.");
-										jQuery("#braintree_production_private_key").focus();
-										is_errors = true;
-									} else {
-										jQuery("#braintree_production_private_key_errors").html("");
-									}
-									
-									if (jQuery("#braintree_production_merchant_id").val() == "") {
-										jQuery("#braintree_production_merchant_id_errors").html("<br/> You have not entered a Production Merchant ID.");
-										jQuery("#braintree_production_merchant_id").focus();
-										is_errors = true;
-									} else {
-										jQuery("#braintree_production_merchant_id_errors").html("");
-									}
-									
-									if (jQuery("#braintree_merchant_currency").val() == "") {
-										jQuery("#braintree_merchant_currency_errors").html("<br/> You have not selected a Production Currency.");
-										jQuery("#braintree_merchant_currency").focus();
-										is_errors = true;
-									} else {
-										jQuery("#braintree_merchant_currency_errors").html("");
-									}
-									
-									if (is_errors == true) {
-										e.preventDefault();
-									}
-								});
-										
-								jQuery("#braintree_sandbox_mode_check").click(function() {
-									if (jQuery("#braintree_sandbox_mode_check").is(":checked")) {
-										jQuery("#braintree_sandbox_mode").val("on");
-									} else {
-										jQuery("#braintree_sandbox_mode").val("off");
-									}
-								});
-										
-								jQuery("#braintree_threedee_secure_check").click(function() {
-									if (jQuery("#braintree_threedee_secure_check").is(":checked")) {
-										jQuery("#braintree_threedee_secure").val("on");
-									} else {
-										jQuery("#braintree_threedee_secure").val("off");
-									}
-								});
-										
-								jQuery("#braintree_threedee_secure_only_check").click(function() {
-									if (jQuery("#braintree_threedee_secure_only_check").is(":checked")) {
-										jQuery("#braintree_threedee_secure_only").val("on");
-									} else {
-										jQuery("#braintree_threedee_secure_only").val("off");
-									}
-								});';
+			$merchant_currencies = getMerchantCurrencies();
+			
+			foreach ($merchant_currencies as $merchant_currency) {
+				$output .= '<option value="'.$merchant_currency['currency'].'"';	
+				if (get_option( 'braintree_sandbox_merchant_currency' ) === $merchant_currency['currency']) {
+					$output .= ' selected';
+				}
+				$output .= '>'.$merchant_currency['currency'].' - '.$merchant_currency['currency_label'].'</option>';			
+			}
+			
+			$output .= '
+									</select>
+									<span id="braintree_sandbox_merchant_id_errors" style="color: red"></span>
+									<span id="braintree_merchant_currency_errors" style="color: red"></span>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<h4>Production Settings</h4>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									Production Public Key
+								</td>
+								<td>
+									<input id="braintree_production_public_key" type="text" name="wpsc_options[braintree_production_public_key]" value="' . get_option( 'braintree_production_public_key' ) . '" />
+									<span id="braintree_production_public_key_errors" style="color: red"></span>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									Production Private Key
+								</td>
+								<td>
+									<input id="braintree_production_private_key" type="text" name="wpsc_options[braintree_production_private_key]" value="' . get_option( 'braintree_production_private_key' ) . '" />
+									<span id="braintree_production_private_key_errors" style="color: red"></span>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									Production Merchant ID
+								</td>
+								<td id="productionMerchantIds">
+									<input id="braintree_production_merchant_id" type="text" name="wpsc_options[braintree_production_merchant_id]" value="' . get_option( 'braintree_production_merchant_id' ) . '" />
+									<select id="braintree_merchant_currency" name="wpsc_options[braintree_production_merchant_currency]">
+										<option value=""></option>';
+			
+			$merchant_currencies = getMerchantCurrencies();
+			
+			foreach ($merchant_currencies as $merchant_currency) {
+				$output .= '<option value="'.$merchant_currency['currency'].'"';	
+				if (get_option( 'braintree_sandbox_merchant_currency' ) === $merchant_currency['currency']) {
+					$output .= ' selected';
+				}
+				$output .= '>'.$merchant_currency['currency'].' - '.$merchant_currency['currency_label'].'</option>';		
+			}
+			
+			$output .= '
+									</select>
+									<span id="braintree_production_merchant_id_errors" style="color: red"></span>
+									<span id="braintree_merchant_currency_errors" style="color: red"></span>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									Settlement Type
+								</td>
+								<td>
+									<select id="braintree_settlement_type" name="wpsc_options[braintree_settlement_type]">
+										<option value="upfront"';
+		
+						if (get_option( 'braintree_settlement_type' ) === 'upfront')
+							$output .= ' selected'; 
+						
+						$output .=		'>Upfront Settlement</option>
+										<option value="deferred"';
+						
+						if (get_option( 'braintree_settlement_type' ) === 'deferred')
+							$output .= ' selected'; 
+						
+						$output .=		'>Deferred Settlement</option>
+									</select>
+								</td>
+							</tr>
 
-	$output .= '
-							});
-						</script>';
-	
-	return $output;
-}
+							</tr>
+							
+							<tr>
+								<td colspan="2">
+									<label><h4>3D Secure Settings</h4></label>
+								</td>
+							</tr>
+							
+							<tr>
+								<td>
+									3-D Secure
+								</td>
+								<td>
+									<label><input ' . checked( 'on', get_option( 'braintree_threedee_secure' ), false ) . ' type="radio" name="wpsc_options[braintree_threedee_secure]" value="on" /> Yes</label>&nbsp;&nbsp;&nbsp;
+									<label><input ' . checked( 'off', get_option( 'braintree_threedee_secure' ), false ) . ' type="radio" name="wpsc_options[braintree_threedee_secure]" value="off" /> No</label>&nbsp;&nbsp;&nbsp;
+									' . __( 'Checking this option processes card transactions through the 3-DS verification protocol.', 'wp-e-commerce' ).'
+								</td>
+							</tr>
+							<tr>
+								<td>
+									3-D Secure Only
+								</td>
+								<td>
+									<label><input ' . checked( 'on', get_option( 'braintree_threedee_secure_only' ), false ) . ' type="radio" name="wpsc_options[braintree_threedee_secure_only]" value="on" /> Yes</label>&nbsp;&nbsp;&nbsp;
+									<label><input ' . checked( 'off', get_option( 'braintree_threedee_secure_only' ), false ) . ' type="radio" name="wpsc_options[braintree_threedee_secure_only]" value="off" /> No</label>&nbsp;&nbsp;&nbsp;
+									' . __( 'Checking this option will only accept card transactions if compatible with the 3-DS verification protocol.', 'wp-e-commerce' ).'
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<h4>PayPal Payments</h4>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<label>Enable PayPal</label>
+								</td>
+								<td>
+									<label><input ' . checked( get_option( 'bt_vzero_pp_payments' ), true, false ) . ' type="radio" name="wpsc_options[bt_vzero_pp_payments]" value="1" /> Yes</label>&nbsp;&nbsp;&nbsp;
+									<label><input ' . checked( (bool) get_option( 'bt_vzero_pp_payments' ), false, false ) . ' type="radio" name="wpsc_options[bt_vzero_pp_payments]" value="0" /> No</label>
+								</td>
+							</tr>
+							
+							<tr id"vzero-pp-button-style">
+								<tr>
+									<td>
+										Button Label:
+									</td>
+									<td>
+										<select name="wpsc_options[bt_vzero_pp_payments_but_label]">
+											<option value="checkout" ' . selected( get_option( 'bt_vzero_pp_payments_but_label' ), 'checkout', false ) . '>Checkout</option>
+											<option value="credit" ' . selected( get_option( 'bt_vzero_pp_payments_but_label' ), 'credit', false ) . '>Credit</option>
+											<option value="pay" ' . selected( get_option( 'bt_vzero_pp_payments_but_label' ), 'pay', false ) . '>Pay</option>
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										Button Size:
+									</td>
+									<td>
+										<select name="wpsc_options[bt_vzero_pp_payments_but_size]">
+											<option value="small" ' . selected( get_option( 'bt_vzero_pp_payments_but_size' ), 'small', false ) . '>Small</option>
+											<option value="medium" ' . selected( get_option( 'bt_vzero_pp_payments_but_size' ), 'medium', false ) . '>Medium</option>
+											<option value="responsive" ' . selected( get_option( 'bt_vzero_pp_payments_but_size' ), 'responsive', false ) . '>Responsive</option>
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										Button Colour:
+									</td>
+									<td>
+										<select name="wpsc_options[bt_vzero_pp_payments_but_colour]">
+											<option value="gold" ' . selected( get_option( 'bt_vzero_pp_payments_but_colour' ), 'gold', false ) . '>Gold</option>
+											<option value="blue" ' . selected( get_option( 'bt_vzero_pp_payments_but_colour' ), 'blue', false ) . '>Blue</option>
+											<option value="silver" ' . selected( get_option( 'bt_vzero_pp_payments_but_colour' ), 'silver', false ) . '>Silver</option>
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										Button Shape:
+									</td>
+									<td>
+										<select name="wpsc_options[bt_vzero_pp_payments_but_shape]">
+											<option value="pill" ' . selected( get_option( 'bt_vzero_pp_payments_but_shape' ), 'pill', false ) . '>Pill</option>
+											<option value="rect" ' . selected( get_option( 'bt_vzero_pp_payments_but_shape' ), 'rect', false ) . '>Rect</option>
+										</select>
+									</td>
+								</tr>
+								</tr>
+							</tr>
+							
+							
+							<tr>
+								<td colspan="2">
+									<h4>Credit Card Payments</h4>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<label>Enable Credit Cards</label>
+								</td>
+								<td>
+									<label><input ' . checked( get_option( 'bt_vzero_cc_payments' ), true, false ) . ' type="radio" name="wpsc_options[bt_vzero_cc_payments]" value="1" /> Yes</label>&nbsp;&nbsp;&nbsp;
+									<label><input ' . checked( (bool) get_option( 'bt_vzero_cc_payments' ), false, false ) . ' type="radio" name="wpsc_options[bt_vzero_cc_payments]" value="0" /> No</label>
+								</td>
+							</tr>';
+		
+		return $output;
+	}
 
 /**
  * Returns a list of merchant currencies
  */
 function getMerchantCurrencies() {
-	
+
 	$merchant_currencies = array();
-	
+
 	// These are all the currencies supported by Braintree. Some have been commented out as trying to 
 	// load them all really slows down the display of the admin section for Braintree payments
-	
+
 	/*
 	$merchant_currencies[] = array('currency'=>'AFN','currency_label'=>'Afghan Afghani');
 	$merchant_currencies[] = array('currency'=>'ALL','currency_label'=>'Albanian Lek');
@@ -611,7 +579,7 @@ function setBraintreeConfiguration() {
 	
 	// Retrieve the correct Braintree settings, depednign on whether
 	// sandbox mode is turne on or off
-	if ($braintree_settings['sandbox_mode'] == 'on') {
+	if ($braintree_settings['sandbox_mode'] == 'on' ) {
 	
 		Braintree_Configuration::environment( 'sandbox' );
 		Braintree_Configuration::merchantId( $braintree_settings['sandbox_merchant_id'] );
@@ -801,13 +769,22 @@ function displayBraintreeRefundForm() {
 }
 
 function pp_braintree_enqueue_js() {
-	global $merchant_currency;
+	global $merchant_currency, $braintree_settings;
+
 		$braintree_threedee_secure = get_option( 'braintree_threedee_secure' );
 		$braintree_threedee_secure_only = get_option( 'braintree_threedee_secure_only' );
 
 		setBraintreeConfiguration();
 		$clientToken = Braintree_ClientToken::generate();
 
+		$sandbox = $braintree_settings['sandbox_mode'] == 'on' ? true : false ;
+
+		// Set PP Button styles
+		$pp_but_label = get_option( 'bt_vzero_pp_payments_but_label' ) != false ? get_option( 'bt_vzero_pp_payments_but_label' ) : 'checkout' ;
+		$pp_but_colour = get_option( 'bt_vzero_pp_payments_but_colour' ) != false ? get_option( 'bt_vzero_pp_payments_but_colour' ) : 'gold' ;
+		$pp_but_size = get_option( 'bt_vzero_pp_payments_but_size' ) != false ? get_option( 'bt_vzero_pp_payments_but_size' ) : 'small' ;
+		$pp_but_shape = get_option( 'bt_vzero_pp_payments_but_shape' ) != false ? get_option( 'bt_vzero_pp_payments_but_shape' ) : 'pill' ;
+		
 		if ( $braintree_threedee_secure == 'on' ) {
 			echo '
 			<style>
@@ -894,9 +871,14 @@ function pp_braintree_enqueue_js() {
 				  
 				  components.client = clientInstance;
 
-				  createHostedFields(clientInstance);
-				  create3DSecure( clientInstance );
-				  createPayPalCheckout(clientInstance );
+				  <?php
+				  if ( (bool) get_option( 'bt_vzero_cc_payments' ) == true ) { ?>				  
+					  createHostedFields(clientInstance);
+					  create3DSecure( clientInstance );
+				  <?php }
+				  if ( (bool) get_option( 'bt_vzero_pp_payments' ) == true ) { ?>
+					createPayPalCheckout(clientInstance );
+				  <?php } ?>
 				});
 			}
 
@@ -930,10 +912,12 @@ function pp_braintree_enqueue_js() {
 				iframe.parentNode.removeChild(iframe);
 				submit.removeAttribute('disabled');
 			}
-			
-			closeFrame.addEventListener('click', function () {
-			  components.threeDSecure.cancelVerifyCard(removeFrame());
-			});
+
+			if( components.threeDSecure ) {
+				closeFrame.addEventListener('click', function () {
+				  components.threeDSecure.cancelVerifyCard(removeFrame());
+				});
+			}
 
 			function createHostedFields( clientInstance ) {
 			braintree.hostedFields.create({
@@ -1061,8 +1045,15 @@ function pp_braintree_enqueue_js() {
 
 					// Set up PayPal with the checkout.js library
 					paypal.Button.render({
-					  env: 'sandbox', // or 'sandbox'
+						env: '<?php if ( $sandbox ) { echo 'sandbox'; } else { echo 'production'; } ?>',
 
+						style: {
+							label: '<?php echo $pp_but_label; ?>',
+							size:  '<?php echo $pp_but_size; ?>',
+							shape: '<?php echo $pp_but_shape; ?>',
+							color: '<?php echo $pp_but_colour; ?>'
+						},
+					  
 					  payment: function () {
 						return components.paypalCheckout.createPayment({
 						  flow: 'checkout', // Required
@@ -1178,11 +1169,3 @@ function pp_braintree_enqueue_js() {
 	<?php
 }
 add_action( 'wpsc_bottom_of_shopping_cart' , 'pp_braintree_enqueue_js', 100 );
-
-add_filter(
-	'wpsc_purchase_log_customer_notification_raw_message',
-	'_wpsc_filter_test_merchant_customer_notification_raw_message',
-	10,
-	2
-);
-
