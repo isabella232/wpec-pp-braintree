@@ -11,11 +11,9 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 	var $name = '';
 
 	function __construct( $purchase_id = null, $is_receiving = false ) {
-		
 		$this->name = __( 'Braintree V.Zero', 'wp-e-commerce' );
-		
+
 		parent::__construct( $purchase_id, $is_receiving );
-		
 		add_action( 'wp_enqueue_scripts', array( $this, 'payment_scripts' ) );
 	}
 
@@ -29,11 +27,11 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 		setBraintreeConfiguration();
 
 		$paymentAmount = $this->cart_data['total_price'];
-		
+
 		$session_id = $this->cart_data['session_id'];
 		$email_address = $this->cart_data['email_address'];
 		$billing_address = $this->cart_data['billing_address'];
-		
+
 		$is_same_billing_address = false;
 
 		// Check if opted to use billing address for shipping and
@@ -49,14 +47,38 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 		} else {
 			$shipping_address = $this->cart_data['billing_address'];
 		}
-		
+
 		$payment_method_nonce = $_POST['pp_btree_method_nonce'];
-		
+
 		//echo "DEBUG :: "."payment_method_nonce = ".$payment_method_nonce."<br />";
 		if ($braintree_settings['settlement_type'] == 'upfront') {
 			$submit_for_settlement = true;
 		} else {
 			$submit_for_settlement = false;
+		}
+
+		// Check 3DS transaction.
+		$success = $this->check_3ds_risk_transaction( $payment_method_nonce );
+		
+		if ( ! $success ) {
+			// 3DS check failed so return;
+			$purchase_log = new WPSC_Purchase_Log( $session_id, 'sessionid' );
+			$purchase_log->set( array(
+				'processed' => WPSC_Purchase_Log::INCOMPLETE_SALE,
+				'notes' => '3D Secure verification failed!',
+			) );
+			$purchase_log->save();
+
+			$error_messages = wpsc_get_customer_meta( 'checkout_misc_error_messages' );
+
+			if ( ! is_array( $error_messages ) ) {
+				$error_messages = array();
+			}
+
+			$error_messages[] = '<strong style="color:red">3D Secure verification failed!</strong>';
+			wpsc_update_customer_meta( 'checkout_misc_error_messages', $error_messages );
+
+			$this->return_to_checkout();
 		}
 		
 		// Create a sale transaction with Braintree
@@ -92,28 +114,73 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 				"submitForSettlement" => $submit_for_settlement,
 			]
 		));
-		
+
 		// In theory all error handling should be done on the client side...? 
 		if ($result->success) {
 			// Payment complete
 			wpsc_update_purchase_log_details( $session_id, array( 'processed' => WPSC_Purchase_Log::ACCEPTED_PAYMENT, 'transactid' => $result->transaction->id ), 'sessionid' );
-			
+
 	 		$this->go_to_transaction_results( $session_id );		
 		} else {
 			if ($result->transaction) {				
 				wpsc_update_purchase_log_details( $session_id, array( 'processed' => WPSC_Purchase_Log::ORDER_RECEIVED, 'transactid' => $result->transaction->id ), 'sessionid' );
-				
+
 	 			$this->go_to_transaction_results( $session_id );		
 			} else {
 				$error = $result->message;
-				
+
 				$this->set_error_message( "Payment Error: ".$error );
-				
+
 				$this->return_to_checkout();
 			}
 		}
 
 	 	exit();
+	}
+
+	public function check_3ds_risk_transaction( $nonce ) {
+		$pp_3ds_risk = get_option( 'bt_vzero_threedee_secure_risk' ) != false ? get_option( 'bt_vzero_threedee_secure_risk' ) : 'standard' ;
+		$paymentMethodNonce = Braintree_PaymentMethodNonce::find( $nonce );
+
+		$info = $paymentMethodNonce->threeDSecureInfo;
+
+		if ( empty( $info ) ) {
+			return true;
+		}
+
+		// Level should be 'strict' or 'standard'
+		$level = $pp_3ds_risk;
+
+		$matrix  = array(
+			'standard' => array(
+				'unsupported_card' => true,
+				'lookup_error'     => true,
+				'lookup_enrolled'  => true,
+				'authenticate_successful_issuer_not_participating' => true,
+				'authentication_unavailable'  => true,
+				'authenticate_signature_verification_failed'  => false,
+				'authenticate_successful'  => true,
+				'authenticate_attempt_successful'  => true,
+				'authenticate_failed'  => false,
+				'authenticate_unable_to_authenticate'  => true,
+				'authenticate_error'  => true,
+			),
+			'strict' => array(
+				'unsupported_card' => false,
+				'lookup_error'     => false,
+				'lookup_enrolled'  => true,
+				'authenticate_successful_issuer_not_participating' => true,
+				'authentication_unavailable'  => false,
+				'authenticate_signature_verification_failed'  => false,
+				'authenticate_successful'  => true,
+				'authenticate_attempt_successful'  => true,
+				'authenticate_failed'  => false,
+				'authenticate_unable_to_authenticate'  => false,
+				'authenticate_error'  => false,
+			)
+		);
+
+		return apply_filters( 'wpsc_braintree_3ds_pass_or_fail', $matrix[ $level ][ $info->status ], $level );
 	}
 }
 
@@ -249,15 +316,12 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 									</select>
 								</td>
 							</tr>
-
 							</tr>
-							
 							<tr>
 								<td colspan="2">
 									<label><h4>3D Secure Settings</h4></label>
 								</td>
 							</tr>
-							
 							<tr>
 								<td>
 									3-D Secure
@@ -279,6 +343,17 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 								</td>
 							</tr>
 							<tr>
+								<td>
+									3-D Secure Risk Settings:
+								</td>
+								<td>
+									<select name="wpsc_options[bt_vzero_threedee_secure_risk]">
+										<option value="standard" ' . selected( get_option( 'bt_vzero_threedee_secure_risk' ), 'standard', false ) . '>Standard</option>
+										<option value="strict" ' . selected( get_option( 'bt_vzero_threedee_secure_risk' ), 'strict', false ) . '>Strict</option>
+									</select>
+								</td>
+							</tr>
+							<tr>
 								<td colspan="2">
 									<h4>PayPal Payments</h4>
 								</td>
@@ -292,7 +367,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 									<label><input ' . checked( (bool) get_option( 'bt_vzero_pp_payments' ), false, false ) . ' type="radio" name="wpsc_options[bt_vzero_pp_payments]" value="0" /> No</label>
 								</td>
 							</tr>
-							
+
 							<tr id"vzero-pp-button-style">
 								<tr>
 									<td>
