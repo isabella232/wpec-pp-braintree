@@ -215,8 +215,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 			'business_currency' => wpsc_get_currency_code(),
 			'business_website'  => get_bloginfo( 'url' ),
 			'redirect'          => urlencode( $redirect_url ),
-			'scopes'            => 'read_write',
-			'env'               => $environment,
+			'scopes'            => 'read_write'
 		);
 
 		if ( ! empty( $current_user->user_firstname ) ) {

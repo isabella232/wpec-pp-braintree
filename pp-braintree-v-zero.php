@@ -15,6 +15,7 @@ class WPEC_PP_Braintree_V_Zero {
 	private static $instance;
 
 	public function __construct() {
+		add_action( 'admin_init', array( $this, 'handle_auth_connect' ) );
 	}
 
 	public static function get_instance() {
@@ -125,5 +126,51 @@ class WPEC_PP_Braintree_V_Zero {
 		$gateway_checkout_form_fields['wpsc_merchant_braintree_v_zero'] = ob_get_clean();
 		}
 	}
+	
+	/**
+	 * Handles the Braintree Auth connection response.
+	 *
+	 * @since 1.0.0
+	 */
+	public function handle_auth_connect() {
+
+		// TO DO some sort of validation that we are on the correct page ? settings/gateways
+
+		$nonce = isset( $_REQUEST[ 'wpec_paypal_braintree_admin_nonce' ] ) ? trim( $_REQUEST[ 'wpec_paypal_braintree_admin_nonce' ] ) : '';
+
+		// if no nonce is present, then this probably wasn't a connection response
+		if ( ! $nonce ) {
+			return;
+		}
+
+		// verify the nonce
+		if ( ! wp_verify_nonce( $nonce, 'connect_paypal_braintree' ) ) {
+			wp_die( __( 'Invalid connection request', 'wpec-paypal-braintree-vzero' ) );
+		}
+
+		$access_token = isset( $_REQUEST[ 'access_token' ] ) ? sanitize_text_field( urldecode( $_REQUEST[ 'access_token' ] ) ) : false; 
+
+		if ( $access_token ) {
+
+			update_option( 'wpec_braintree_auth_access_token', $access_token );
+
+			list( $token_key, $environment, $merchant_id, $raw_token ) = explode( '$', $access_token );
+
+			update_option( 'wpec_braintree_auth_environment', $environment );
+			update_option( 'wpec_braintree_auth_merchant_id', $merchant_id );
+
+			$connected = true;
+
+		} else {
+
+			// Show an error message maybe ?
+
+			$connected = false;
+		}
+
+		wp_safe_redirect( add_query_arg( 'wpec_braintree_connected', $connected, $this->get_settings_url() ) );
+		exit;
+	}
+
 }
 add_action( 'wpsc_pre_init', 'WPEC_PP_Braintree_V_Zero::get_instance' );
