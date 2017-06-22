@@ -183,13 +183,96 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 		return apply_filters( 'wpsc_braintree_3ds_pass_or_fail', $matrix[ $level ][ $info->status ], $level );
 	}
 }
+	
+	/**
+	 * Gets the Braintree Auth connect URL.
+	 *
+	 * Although the Partner API expects an array, the WooCommerce Connect
+	 * middleware presently wants things flattened. So instead of passing a user
+	 * array and a business array, we pass selected fields with `user_` and
+	 * `business_` prepended.
+	 *
+	 * @since 2.0.0
+	 * @param string $environment the desired environment, either 'production' or 'sandbox'
+	 * @return string
+	 */
+	function wpec_bt_get_connect_url() {
+
+		$connect_url = 'https://wpecommerce.org/wp-json/wpec/v1/braintree';
+
+		$redirect_url = wp_nonce_url( admin_url( 'options-general.php?page=wpsc-settings&tab=gateway&payment_gateway_id=wpsc_merchant_braintree_v_zero' ), 'connect_paypal_braintree', 'wpec_paypal_braintree_admin_nonce' );
+
+		$current_user = wp_get_current_user();
+
+		$environment = get_option( 'braintree_sandbox_mode' );
+		$environment = $environment == 'on' ? 'sandbox' : 'production' ;
+		
+		// Note:  We doubly urlencode the redirect url to avoid Braintree's server
+		// decoding it which would cause loss of query params on the final redirect
+		$query_args = array(
+			'Auth'              => 'WPeCBraintree',
+			'user_email'        => $current_user->user_email,
+			'business_currency' => wpsc_get_currency_code(),
+			'business_website'  => get_bloginfo( 'url' ),
+			'redirect'          => urlencode( $redirect_url ),
+			'scopes'            => 'read_write',
+			'env'               => $environment,
+		);
+
+		if ( ! empty( $current_user->user_firstname ) ) {
+			$query_args[ 'user_firstName' ] = $current_user->user_firstname;
+		}
+
+		if ( ! empty( $current_user->user_lastname ) ) {
+			$query_args[ 'user_lastName' ] = $current_user->user_lastname;
+		}
+
+		// Let's go ahead and assume the user and business are in the same region and country,
+		// because they probably are.  If not, they can edit these anyways
+		$base_country = new WPSC_Country( wpsc_get_base_country() );
+		$region = new WPSC_Region( get_option( 'base_country' ), get_option( 'base_region' ) );
+		
+		$location = in_array( $base_country->get_isocode(), array( 'US', 'UK', 'FR' ) ) ? $base_country->get_isocode() : 'US';
+		
+		if ( ! empty( wpsc_get_base_country() ) ) {
+			$query_args['business_country'] = $query_args['user_country'] = wpsc_get_base_country();
+		}
+
+		if ( ! empty( $region->get_name() ) ) {
+			$query_args['business_region'] = $query_args['user_region'] = $region->get_code();
+		}
+
+		if ( $site_name = get_bloginfo( 'name' ) ) {
+			$query_args[ 'business_name' ] = $site_name;
+		}
+
+		if ( $site_description = get_bloginfo( 'description' ) ) {
+			$query_args[ 'business_description' ] = $site_description;
+		}
+
+		return add_query_arg( $query_args, $connect_url );
+	}
 
 	/**
 	 * Creates the Briantree configuration form in the admin section 
 	 * @return string
 	 */
 	function form_braintree_v_zero() {
+		
+		$button_image_url = WPEC_PPBRAINTREE_VZERO_PLUGIN_URL . '/braintree/images/connect-braintree.png';
+		
 		$output = '
+					<tr class="wc-braintree-auth">
+						<td>Connect/Disconnect</td>
+						<td>
+								<a href="' . esc_url( wpec_bt_get_connect_url() ) . '" class="wpec-braintree-connect-button"><img src="' . esc_url( $button_image_url ) . '"/></a>
+								<br />
+								<br />
+								<a href="' . esc_url( wpec_bt_get_connect_url() ) . '" class="wpec-braintree-connect-button">' . esc_html_e( 'Not ready to accept live payments? Click here to connect using sandbox mode.', 'woocommerce-gateway-paypal-powered-by-braintree' ) . '</a>
+						</td>
+					</tr>
+		
+		
 							<tr>
 								<td>
 									Sandbox Mode
