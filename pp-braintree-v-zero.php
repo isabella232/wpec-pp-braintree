@@ -168,7 +168,7 @@ class WPEC_PP_Braintree_V_Zero {
 			$connected = false;
 		}
 
-		wp_safe_redirect( add_query_arg( 'wpec_braintree_connected', $connected, $this->get_settings_url() ) );
+		wp_safe_redirect( add_query_arg( 'wpec_braintree_connected', $connected, admin_url( 'options-general.php?page=wpsc-settings&tab=gateway&payment_gateway_id=wpsc_merchant_braintree_v_zero' ) ) );
 		exit;
 	}
 
