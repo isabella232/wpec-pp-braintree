@@ -187,12 +187,12 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 	/**
 	 * Gets the Braintree Auth connect URL.
 	 *
-	 * Although the Partner API expects an array, the WooCommerce Connect
+	 * Although the Partner API expects an array, the WP eCommerce Connect
 	 * middleware presently wants things flattened. So instead of passing a user
 	 * array and a business array, we pass selected fields with `user_` and
 	 * `business_` prepended.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.0
 	 * @param string $environment the desired environment, either 'production' or 'sandbox'
 	 * @return string
 	 */
@@ -268,7 +268,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 								<a href="' . esc_url( wpec_bt_get_connect_url() ) . '" class="wpec-braintree-connect-button"><img src="' . esc_url( $button_image_url ) . '"/></a>
 								<br />
 								<br />
-								<a href="' . esc_url( wpec_bt_get_connect_url() ) . '" class="wpec-braintree-connect-button">' . esc_html_e( 'Not ready to accept live payments? Click here to connect using sandbox mode.', 'woocommerce-gateway-paypal-powered-by-braintree' ) . '</a>
+								<a href="' . esc_url( wpec_bt_get_connect_url() ) . '" class="wpec-braintree-connect-button">' . esc_html_e( 'Not ready to accept live payments? Click here to connect using sandbox mode.', 'wpec-paypal-braintree-vzero' ) . '</a>
 						</td>
 					</tr>
 		
