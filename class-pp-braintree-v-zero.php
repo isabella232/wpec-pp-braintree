@@ -183,24 +183,31 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 		return apply_filters( 'wpsc_braintree_3ds_pass_or_fail', $matrix[ $level ][ $info->status ], $level );
 	}
 }
-	
+
+	/**
+	 * Gets the Braintree Auth disconnect URL.
+	 *
+	 * @since 1.0.0
+	 * @return string
+	 */
+	function wpec_bt_auth_get_disconnect_url() {
+
+		$url = add_query_arg( 'disconnect_paypal_braintree', 1, admin_url( esc_url_raw( 'options-general.php?page=wpsc-settings&tab=gateway&payment_gateway_id=wpsc_merchant_braintree_v_zero' ) ) );
+
+		return wp_nonce_url( $url, 'disconnect_paypal_braintree', 'wpec_paypal_braintree_admin_nonce' );
+	}
+
 	/**
 	 * Gets the Braintree Auth connect URL.
 	 *
-	 * Although the Partner API expects an array, the WP eCommerce Connect
-	 * middleware presently wants things flattened. So instead of passing a user
-	 * array and a business array, we pass selected fields with `user_` and
-	 * `business_` prepended.
-	 *
 	 * @since 1.0.0
-	 * @param string $environment the desired environment, either 'production' or 'sandbox'
 	 * @return string
 	 */
-	function wpec_bt_get_connect_url() {
+	function wpec_bt_auth_get_connect_url() {
 
 		$connect_url = 'https://wpecommerce.org/wp-json/wpec/v1/braintree';
 
-		$redirect_url = wp_nonce_url( admin_url( 'options-general.php?page=wpsc-settings&tab=gateway&payment_gateway_id=wpsc_merchant_braintree_v_zero' ), 'connect_paypal_braintree', 'wpec_paypal_braintree_admin_nonce' );
+		$redirect_url = wp_nonce_url( admin_url( esc_url_raw( 'options-general.php?page=wpsc-settings&tab=gateway&payment_gateway_id=wpsc_merchant_braintree_v_zero' ) ), 'connect_paypal_braintree', 'wpec_paypal_braintree_admin_nonce' );
 
 		$current_user = wp_get_current_user();
 
@@ -214,7 +221,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 			'user_email'        => $current_user->user_email,
 			'business_currency' => wpsc_get_currency_code(),
 			'business_website'  => get_bloginfo( 'url' ),
-			'redirect'          => urlencode( $redirect_url ),
+			'redirect'          => base64_encode( $redirect_url ),
 			'scopes'            => 'read_write'
 		);
 
@@ -252,27 +259,41 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 		return add_query_arg( $query_args, $connect_url );
 	}
 
+	function bt_auth_can_connect() {
+		$base_country = new WPSC_Country( wpsc_get_base_country() );
+
+		return in_array( $base_country->get_isocode(), array( 'US', 'UK', 'FR' ) );	
+	}
+
+	function bt_auth_is_connected() {
+		$token = get_option( 'wpec_braintree_auth_access_token' );
+
+		return ! empty( $token );		
+	}
+
 	/**
 	 * Creates the Briantree configuration form in the admin section 
 	 * @return string
 	 */
 	function form_braintree_v_zero() {
+		$output = '';
+
+		if ( bt_auth_can_connect() ) {
+			$connect_url = ! bt_auth_is_connected() ? wpec_bt_auth_get_connect_url() : wpec_bt_auth_get_disconnect_url();
+			$button_image_url = WPEC_PPBRAINTREE_VZERO_PLUGIN_URL . '/braintree/images/connect-braintree.png';
+
+			$output .= '<tr class="wc-braintree-auth">
+							<td>Connect/Disconnect</td>';
+			if ( bt_auth_is_connected() ) {
+				$output .= "<td><a href='". esc_url( $connect_url ) . "' class='button-primary'>" . esc_html__( 'Disconnect from PayPal Powered by Braintree', 'wpec-paypal-braintree-vzero' ) . "</a></td>";
+			} else {
+				$output .= '<td><a href="' . esc_url( $connect_url ) . '" class="wpec-braintree-connect-button"><img src="' . esc_url( $button_image_url ) . '"/></a></td>';
+			}
+			
+			$output .= '</tr>';
+		}
 		
-		$button_image_url = WPEC_PPBRAINTREE_VZERO_PLUGIN_URL . '/braintree/images/connect-braintree.png';
-		
-		$output = '
-					<tr class="wc-braintree-auth">
-						<td>Connect/Disconnect</td>
-						<td>
-								<a href="' . esc_url( wpec_bt_get_connect_url() ) . '" class="wpec-braintree-connect-button"><img src="' . esc_url( $button_image_url ) . '"/></a>
-								<br />
-								<br />
-								<a href="' . esc_url( wpec_bt_get_connect_url() ) . '" class="wpec-braintree-connect-button">' . esc_html_e( 'Not ready to accept live payments? Click here to connect using sandbox mode.', 'wpec-paypal-braintree-vzero' ) . '</a>
-						</td>
-					</tr>
-		
-		
-							<tr>
+		$output .= '		<tr>
 								<td>
 									Sandbox Mode
 								</td>
