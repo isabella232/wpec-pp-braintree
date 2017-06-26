@@ -39,7 +39,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 			}
 		}
 
-		if ( $is_same_billing_address == true ) { 
+		if ( $is_same_billing_address == true ) {
 			$shipping_address = $this->cart_data['shipping_address'];
 		} else {
 			$shipping_address = $this->cart_data['billing_address'];
@@ -56,7 +56,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 
 		// Check 3DS transaction.
 		$success = $this->check_3ds_risk_transaction( $payment_method_nonce );
-		
+
 		if ( ! $success ) {
 			// 3DS check failed so return;
 			$purchase_log = new WPSC_Purchase_Log( $session_id, 'sessionid' );
@@ -77,7 +77,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 
 			$this->return_to_checkout();
 		}
-		
+
 		// Create a sale transaction with Braintree
 		$result = Braintree_Transaction::sale(array(
 			"amount" => $paymentAmount,
@@ -112,17 +112,17 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 			]
 		));
 
-		// In theory all error handling should be done on the client side...? 
+		// In theory all error handling should be done on the client side...?
 		if ($result->success) {
 			// Payment complete
 			wpsc_update_purchase_log_details( $session_id, array( 'processed' => WPSC_Purchase_Log::ACCEPTED_PAYMENT, 'transactid' => $result->transaction->id ), 'sessionid' );
 
-	 		$this->go_to_transaction_results( $session_id );		
+	 		$this->go_to_transaction_results( $session_id );
 		} else {
-			if ($result->transaction) {				
+			if ($result->transaction) {
 				wpsc_update_purchase_log_details( $session_id, array( 'processed' => WPSC_Purchase_Log::ORDER_RECEIVED, 'transactid' => $result->transaction->id ), 'sessionid' );
 
-	 			$this->go_to_transaction_results( $session_id );		
+	 			$this->go_to_transaction_results( $session_id );
 			} else {
 				$error = $result->message;
 
@@ -210,7 +210,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 
 		$environment = get_option( 'braintree_sandbox_mode' );
 		$environment = $environment == 'on' ? 'sandbox' : 'production' ;
-		
+
 		// Note:  We doubly urlencode the redirect url to avoid Braintree's server
 		// decoding it which would cause loss of query params on the final redirect
 		$query_args = array(
@@ -233,9 +233,9 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 		// because they probably are.  If not, they can edit these anyways
 		$base_country = new WPSC_Country( wpsc_get_base_country() );
 		$region = new WPSC_Region( get_option( 'base_country' ), get_option( 'base_region' ) );
-		
+
 		$location = in_array( $base_country->get_isocode(), array( 'US', 'UK', 'FR' ) ) ? $base_country->get_isocode() : 'US';
-		
+
 		if ( ! empty( wpsc_get_base_country() ) ) {
 			$query_args['business_country'] = $query_args['user_country'] = wpsc_get_base_country();
 		}
@@ -258,17 +258,17 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 	function bt_auth_can_connect() {
 		$base_country = new WPSC_Country( wpsc_get_base_country() );
 
-		return in_array( $base_country->get_isocode(), array( 'US', 'UK', 'FR' ) );	
+		return in_array( $base_country->get_isocode(), array( 'US', 'UK', 'FR' ) );
 	}
 
 	function bt_auth_is_connected() {
 		$token = get_option( 'wpec_braintree_auth_access_token' );
 
-		return ! empty( $token );		
+		return ! empty( $token );
 	}
 
 	/**
-	 * Creates the Briantree configuration form in the admin section 
+	 * Creates the Briantree configuration form in the admin section
 	 * @return string
 	 */
 	function form_braintree_v_zero() {
@@ -286,10 +286,10 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 				$output .= '<td><a href="' . esc_url( $connect_url ) . '" class="wpec-braintree-connect-button"><img src="' . esc_url( $button_image_url ) . '"/></a></td>
 							<td></td>';
 			}
-			
+
 			$output .= '</tr>';
 		}
-		
+
 		$output .= '		<tr>
 								<td>
 									Sandbox Mode
@@ -330,17 +330,17 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 									<input id="braintree_sandbox_merchant_id" type="text" name="wpsc_options[braintree_sandbox_merchant_id]" value="' . get_option( 'braintree_sandbox_merchant_id' ) . '" />
 									<select id="braintree_merchant_currency" name="wpsc_options[braintree_sandbox_merchant_currency]">
 										<option value=""></option>';
-			
+
 			$merchant_currencies = getMerchantCurrencies();
-			
+
 			foreach ($merchant_currencies as $merchant_currency) {
-				$output .= '<option value="'.$merchant_currency['currency'].'"';	
+				$output .= '<option value="'.$merchant_currency['currency'].'"';
 				if (get_option( 'braintree_sandbox_merchant_currency' ) === $merchant_currency['currency']) {
 					$output .= ' selected';
 				}
-				$output .= '>'.$merchant_currency['currency'].' - '.$merchant_currency['currency_label'].'</option>';			
+				$output .= '>'.$merchant_currency['currency'].' - '.$merchant_currency['currency_label'].'</option>';
 			}
-			
+
 			$output .= '
 									</select>
 									<span id="braintree_sandbox_merchant_id_errors" style="color: red"></span>
@@ -378,17 +378,17 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 									<input id="braintree_production_merchant_id" type="text" name="wpsc_options[braintree_production_merchant_id]" value="' . get_option( 'braintree_production_merchant_id' ) . '" />
 									<select id="braintree_merchant_currency" name="wpsc_options[braintree_production_merchant_currency]">
 										<option value=""></option>';
-			
+
 			$merchant_currencies = getMerchantCurrencies();
-			
+
 			foreach ($merchant_currencies as $merchant_currency) {
-				$output .= '<option value="'.$merchant_currency['currency'].'"';	
+				$output .= '<option value="'.$merchant_currency['currency'].'"';
 				if (get_option( 'braintree_sandbox_merchant_currency' ) === $merchant_currency['currency']) {
 					$output .= ' selected';
 				}
-				$output .= '>'.$merchant_currency['currency'].' - '.$merchant_currency['currency_label'].'</option>';		
+				$output .= '>'.$merchant_currency['currency'].' - '.$merchant_currency['currency_label'].'</option>';
 			}
-			
+
 			$output .= '
 									</select>
 									<span id="braintree_production_merchant_id_errors" style="color: red"></span>
@@ -402,16 +402,16 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 								<td>
 									<select id="braintree_settlement_type" name="wpsc_options[braintree_settlement_type]">
 										<option value="upfront"';
-		
+
 						if (get_option( 'braintree_settlement_type' ) === 'upfront')
-							$output .= ' selected'; 
-						
+							$output .= ' selected';
+
 						$output .=		'>Upfront Settlement</option>
 										<option value="deferred"';
-						
+
 						if (get_option( 'braintree_settlement_type' ) === 'deferred')
-							$output .= ' selected'; 
-						
+							$output .= ' selected';
+
 						$output .=		'>Deferred Settlement</option>
 									</select>
 								</td>
@@ -518,8 +518,8 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 								</tr>
 								</tr>
 							</tr>
-							
-							
+
+
 							<tr>
 								<td colspan="2">
 									<h4>Credit Card Payments</h4>
@@ -534,7 +534,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 									<label><input ' . checked( (bool) get_option( 'bt_vzero_cc_payments' ), false, false ) . ' type="radio" name="wpsc_options[bt_vzero_cc_payments]" value="0" /> No</label>
 								</td>
 							</tr>';
-		
+
 		return $output;
 	}
 
@@ -545,7 +545,7 @@ function getMerchantCurrencies() {
 
 	$merchant_currencies = array();
 
-	// These are all the currencies supported by Braintree. Some have been commented out as trying to 
+	// These are all the currencies supported by Braintree. Some have been commented out as trying to
 	// load them all really slows down the display of the admin section for Braintree payments
 
 	/*
@@ -583,7 +583,7 @@ function getMerchantCurrencies() {
 	$merchant_currencies[] = array('currency'=>'CNY','currency_label'=>'Chinese Renminbi Yuan');
 	/*
 	$merchant_currencies[] = array('currency'=>'COP','currency_label'=>'Colombian Peso');
-	$merchant_currencies[] = array('currency'=>'CRC','currency_label'=>'Costa Rican Colón');
+	$merchant_currencies[] = array('currency'=>'CRC','currency_label'=>'Costa Rican Colï¿½n');
 	$merchant_currencies[] = array('currency'=>'CUC','currency_label'=>'Cuban Convertible Peso');
 	$merchant_currencies[] = array('currency'=>'CUP','currency_label'=>'Cuban Peso');
 	$merchant_currencies[] = array('currency'=>'CVE','currency_label'=>'Cape Verdean Escudo');
@@ -621,7 +621,7 @@ function getMerchantCurrencies() {
 	$merchant_currencies[] = array('currency'=>'INR','currency_label'=>'Indian Rupee');
 	$merchant_currencies[] = array('currency'=>'IQD','currency_label'=>'Iraqi Dinar');
 	$merchant_currencies[] = array('currency'=>'IRR','currency_label'=>'Iranian Rial');
-	$merchant_currencies[] = array('currency'=>'ISK','currency_label'=>'Icelandic Króna');
+	$merchant_currencies[] = array('currency'=>'ISK','currency_label'=>'Icelandic Krï¿½na');
 	$merchant_currencies[] = array('currency'=>'JMD','currency_label'=>'Jamaican Dollar');
 	$merchant_currencies[] = array('currency'=>'JOD','currency_label'=>'Jordanian Dinar');
 	*/
@@ -649,7 +649,7 @@ function getMerchantCurrencies() {
 	$merchant_currencies[] = array('currency'=>'MGA','currency_label'=>'Malagasy Ariary');
 	$merchant_currencies[] = array('currency'=>'MKD','currency_label'=>'Macedonian Denar');
 	$merchant_currencies[] = array('currency'=>'MMK','currency_label'=>'Myanmar Kyat');
-	$merchant_currencies[] = array('currency'=>'MNT','currency_label'=>'Mongolian Tögrög');
+	$merchant_currencies[] = array('currency'=>'MNT','currency_label'=>'Mongolian Tï¿½grï¿½g');
 	$merchant_currencies[] = array('currency'=>'MOP','currency_label'=>'Macanese Pataca');
 	$merchant_currencies[] = array('currency'=>'MRO','currency_label'=>'Mauritanian Ouguiya');
 	$merchant_currencies[] = array('currency'=>'MUR','currency_label'=>'Mauritian Rupee');
@@ -660,7 +660,7 @@ function getMerchantCurrencies() {
 	$merchant_currencies[] = array('currency'=>'MZN','currency_label'=>'Mozambican Metical');
 	$merchant_currencies[] = array('currency'=>'NAD','currency_label'=>'Namibian Dollar');
 	$merchant_currencies[] = array('currency'=>'NGN','currency_label'=>'Nigerian Naira');
-	$merchant_currencies[] = array('currency'=>'NIO','currency_label'=>'Nicaraguan Córdoba');
+	$merchant_currencies[] = array('currency'=>'NIO','currency_label'=>'Nicaraguan Cï¿½rdoba');
 	$merchant_currencies[] = array('currency'=>'NOK','currency_label'=>'Norwegian Krone');
 	$merchant_currencies[] = array('currency'=>'NPR','currency_label'=>'Nepalese Rupee');
 	*/
@@ -673,7 +673,7 @@ function getMerchantCurrencies() {
 	$merchant_currencies[] = array('currency'=>'PHP','currency_label'=>'Philippine Peso');
 	$merchant_currencies[] = array('currency'=>'PKR','currency_label'=>'Pakistani Rupee');
 	$merchant_currencies[] = array('currency'=>'PLN','currency_label'=>'Polish Zloty');
-	$merchant_currencies[] = array('currency'=>'PYG','currency_label'=>'Paraguayan Guaraní');
+	$merchant_currencies[] = array('currency'=>'PYG','currency_label'=>'Paraguayan Guaranï¿½');
 	$merchant_currencies[] = array('currency'=>'QAR','currency_label'=>'Qatari Riyal');
 	$merchant_currencies[] = array('currency'=>'RON','currency_label'=>'Romanian Leu');
 	$merchant_currencies[] = array('currency'=>'RSD','currency_label'=>'Serbian Dinar');
@@ -690,8 +690,8 @@ function getMerchantCurrencies() {
 	$merchant_currencies[] = array('currency'=>'SLL','currency_label'=>'Sierra Leonean Leone');
 	$merchant_currencies[] = array('currency'=>'SOS','currency_label'=>'Somali Shilling');
 	$merchant_currencies[] = array('currency'=>'SRD','currency_label'=>'Surinamese Dollar');
-	$merchant_currencies[] = array('currency'=>'STD','currency_label'=>'São Tomé and Príncipe Dobra');
-	$merchant_currencies[] = array('currency'=>'SVC','currency_label'=>'Salvadoran Colón');
+	$merchant_currencies[] = array('currency'=>'STD','currency_label'=>'Sï¿½o Tomï¿½ and Prï¿½ncipe Dobra');
+	$merchant_currencies[] = array('currency'=>'SVC','currency_label'=>'Salvadoran Colï¿½n');
 	$merchant_currencies[] = array('currency'=>'SYP','currency_label'=>'Syrian Pound');
 	$merchant_currencies[] = array('currency'=>'SZL','currency_label'=>'Swazi Lilangeni');
 	$merchant_currencies[] = array('currency'=>'THB','currency_label'=>'Thai Baht');
@@ -711,8 +711,8 @@ function getMerchantCurrencies() {
 	/*
 	$merchant_currencies[] = array('currency'=>'UYU','currency_label'=>'Uruguayan Peso');
 	$merchant_currencies[] = array('currency'=>'UZS','currency_label'=>'Uzbekistani Som');
-	$merchant_currencies[] = array('currency'=>'VEF','currency_label'=>'Venezuelan Bolívar');
-	$merchant_currencies[] = array('currency'=>'VND','currency_label'=>'Vietnamese Ð?ng');
+	$merchant_currencies[] = array('currency'=>'VEF','currency_label'=>'Venezuelan Bolï¿½var');
+	$merchant_currencies[] = array('currency'=>'VND','currency_label'=>'Vietnamese ï¿½?ng');
 	$merchant_currencies[] = array('currency'=>'VUV','currency_label'=>'Vanuatu Vatu');
 	$merchant_currencies[] = array('currency'=>'WST','currency_label'=>'Samoan Tala');
 	$merchant_currencies[] = array('currency'=>'XAF','currency_label'=>'Central African Cfa Franc');
@@ -724,7 +724,7 @@ function getMerchantCurrencies() {
 	$merchant_currencies[] = array('currency'=>'ZMK','currency_label'=>'Zambian Kwacha');
 	$merchant_currencies[] = array('currency'=>'ZWD','currency_label'=>'Zimbabwean Dollar');
 	*/
-	
+
 	return $merchant_currencies;
 }
 
@@ -733,41 +733,41 @@ function getMerchantCurrencies() {
  */
 function setBraintreeConfiguration() {
 	global $merchant_currency, $braintree_settings;
-	
+
 	// Get setting values
 	$braintree_settings['sandbox_mode']     			= get_option( 'braintree_sandbox_mode' );
 	$braintree_settings['sandbox_private_key'] 			= get_option( 'braintree_sandbox_private_key' );
 	$braintree_settings['sandbox_public_key']  			= get_option( 'braintree_sandbox_public_key' );
 	$braintree_settings['sandbox_merchant_id']			= get_option( 'braintree_sandbox_merchant_id' );
 	$braintree_settings['sandbox_merchant_currency']	= get_option( 'braintree_sandbox_merchant_currency' );
-	
+
 	$braintree_settings['production_private_key'] 		= get_option( 'braintree_production_private_key' );
 	$braintree_settings['production_public_key']  		= get_option( 'braintree_production_public_key' );
 	$braintree_settings['production_merchant_id']		= get_option( 'braintree_production_merchant_id' );
 	$braintree_settings['production_merchant_currency']	= get_option( 'braintree_production_merchant_currency' );
-	
+
 	$braintree_settings['settlement_type']     			= get_option( 'braintree_settlement_type' );
 	$braintree_settings['threedee_secure']     			= get_option( 'braintree_threedee_secure' );
 	$braintree_settings['threedee_secure_only']   		= get_option( 'braintree_threedee_secure_only' );
-	
+
 	// Retrieve the correct Braintree settings, depednign on whether
 	// sandbox mode is turne on or off
 	if ($braintree_settings['sandbox_mode'] == 'on' ) {
-	
+
 		Braintree_Configuration::environment( 'sandbox' );
 		Braintree_Configuration::merchantId( $braintree_settings['sandbox_merchant_id'] );
 		Braintree_Configuration::publicKey( $braintree_settings['sandbox_public_key'] );
 		Braintree_Configuration::privateKey( $braintree_settings['sandbox_private_key'] );
 		$merchant_currency = $braintree_settings['sandbox_merchant_currency'];
-	
+
 	} else {
-	
+
 		Braintree_Configuration::environment( 'production' );
 		Braintree_Configuration::merchantId( $braintree_settings['production_merchant_id'] );
 		Braintree_Configuration::publicKey( $braintree_settings['production_public_key'] );
 		Braintree_Configuration::privateKey( $braintree_settings['production_private_key'] );
 		$merchant_currency = $braintree_settings['production_merchant_currency'];
-	
+
 	}
 }
 
@@ -775,7 +775,7 @@ function setBraintreeConfiguration() {
  * Checks whether a Braintree transaction ID is valid
  */
 function checkBraintreeTransaction() {
-	
+
 	setBraintreeConfiguration();
 
 	$transaction_id = $_POST['transaction_id'];
@@ -792,9 +792,9 @@ function checkBraintreeTransaction() {
  * Retrieves a specific transaction
  */
 function retrieveBraintreeTransaction($transaction_id) {
-	
+
 	setBraintreeConfiguration();
-	
+
 	if ( !empty( $transaction_id ) ) {
 		$transaction = Braintree_Transaction::find( $transaction_id );
 		return $transaction;
@@ -812,9 +812,9 @@ function submitBraintreeRefund() {
 
 	$transaction_id = $_POST['refund_payment'];
 
-	try { 
+	try {
 		$result = Braintree_Transaction::refund( $transaction_id );
-		
+
 		if ($result->success) {
 			$_SESSION['refund_state'] = 'success';
 			wpsc_update_purchase_log_details( $transaction_id, array( 'processed' => WPSC_Purchase_Log::REFUNDED ), 'transactid' );
@@ -822,18 +822,18 @@ function submitBraintreeRefund() {
 			$_SESSION['refund_state'] = 'failure';
 			$_SESSION['braintree_errors'] = $result->message;
 		}
-		
+
 		$_SESSION['braintree_transaction_id'] = $transaction_id;
 	}
 	catch (Braintree\Exception\Configuration $bec) {
 		$output = '<p style="font-weight: bold; color: red; padding: 10px; text-align: center;">There is a problem with the Braintree payment gateway configuration</p>';
-		
+
 		$gateway_checkout_form_fields['wpsc_merchant_braintree_v_zero'] = $output;
 	}
 	catch (Exception $e) {
 		// There is not a valid Braintree connection so display nothing.
 		$output = '<p style="font-weight: bold; color: red; padding: 10px; text-align: center;">There is a problem with the Braintree payment gateway</p>';
-		
+
 		$gateway_checkout_form_fields['wpsc_merchant_braintree_v_zero'] = $output;
 	}
 }
@@ -842,11 +842,11 @@ function submitBraintreeRefund() {
  * Displays the transaction refund form
  */
 function displayBraintreeRefundForm() {
-	
+
 	$braintree_transaction = null;
 	$braintree_errors = null;
 	$braintree_refund_state = null;
-	
+
 	if ( !empty( $_SESSION['braintree_transaction_id'] ) ) {
 		try {
 			$braintree_transaction = retrieveBraintreeTransaction( $_SESSION['braintree_transaction_id'] );
@@ -854,7 +854,7 @@ function displayBraintreeRefundForm() {
 		catch (BraintreeTransactionException $bte) {
 			$braintree_errors = 'You have not entered a Transaction ID';
 		}
-		
+
 		unset( $_SESSION['braintree_transaction_id'] );
 	}
 
@@ -867,20 +867,20 @@ function displayBraintreeRefundForm() {
 	<p><?php _e( 'This page allows you to make refunds to customers that paid via the Braintree gateway. If the Transaction has been settled and has not yet been refunded you will be able to submit the Transaction for refunding.', 'wp-e-commerce' ); ?></p>
 
 	<div>
-<?php 
+<?php
 	if ( !empty( $_SESSION['refund_state'] ) ) {
 		$braintree_refund_state = $_SESSION['refund_state'];
 		unset( $_SESSION['$refund_state'] );
-		
+
 		if ($braintree_refund_state == 'success') {
 ?>
 		<p>
 			Your Transaction has been refunded.
 		</p>
-<?php 
+<?php
 		}
 	}
-	
+
 	if ($braintree_errors != null) {
 		print '<p style="margin-top: 10px; padding: 10px; border: 1px solid red; font-weight: bold; background-color: darksalmon;">'.$braintree_errors.'</p>';
 	}
@@ -889,26 +889,26 @@ function displayBraintreeRefundForm() {
 			Braintree Transaction ID: <input type="text" id="transaction_id" name="transaction_id" value="" /> <button type="submit" id="retrieve_transaction" name="retrieve_transaction" value="retrieve_transaction">Find Transaction</button>
 		</p>
 	</div>
-<?php 
+<?php
 	if ($braintree_transaction != null) {
 		//var_dump($braintree_transaction);
 ?>
 	<p>
 		<b>Braintree Transaction ID:</b> <?php print $braintree_transaction->id; ?>
 	</p>
-<?php 
+<?php
 		if ($braintree_transaction->type == 'credit') {
 ?>
 	<p>
 		<b>Transaction Type:</b> <span style="color: red;">Credit</span>
 	</p>
-<?php 
+<?php
 		} else {
 ?>
 	<p>
 		<b>Transaction Type:</b> <span style="color: green;">Sale</span>
 	</p>
-<?php 
+<?php
 		}
 ?>
 	<p>
@@ -926,7 +926,7 @@ function displayBraintreeRefundForm() {
 	<p>
 		<b>Email:</b> <?php print $braintree_transaction->customerDetails->email; ?>
 	</p>
-<?php 
+<?php
 		if ( $braintree_transaction->type == 'credit' ) {
 			// This transaction is a refund so do not show refund button
 		} elseif ( $braintree_transaction->refundId != null ) {
@@ -935,7 +935,7 @@ function displayBraintreeRefundForm() {
 			if ($braintree_transaction->status == 'settled') {
 ?>
 	<button type="submit" id="refund_payment" name="refund_payment" value="<?php print $braintree_transaction->id; ?>">Refund Transaction</button>
-<?php 
+<?php
 			}
 		}
 	}
@@ -970,7 +970,7 @@ function pp_braintree_enqueue_js() {
 		$pp_but_colour = get_option( 'bt_vzero_pp_payments_but_colour' ) != false ? get_option( 'bt_vzero_pp_payments_but_colour' ) : 'gold' ;
 		$pp_but_size = get_option( 'bt_vzero_pp_payments_but_size' ) != false ? get_option( 'bt_vzero_pp_payments_but_size' ) : 'small' ;
 		$pp_but_shape = get_option( 'bt_vzero_pp_payments_but_shape' ) != false ? get_option( 'bt_vzero_pp_payments_but_shape' ) : 'pill' ;
-		
+
 		if ( $braintree_threedee_secure == 'on' ) {
 			echo '
 			<style>
@@ -983,7 +983,7 @@ function pp_braintree_enqueue_js() {
 			  height: 100vh;
 			  z-index: 100;
 			}
-			
+
 			.pp-btree-hosted-fields-modal-hidden {
 				display: none !important;
 			}
@@ -1028,84 +1028,56 @@ function pp_braintree_enqueue_js() {
 		<script src="https://js.braintreegateway.com/web/3.16.0/js/paypal-checkout.min.js"></script>
 		<script src="https://www.paypalobjects.com/api/checkout.js" data-version-4></script>
 		<script src="https://js.braintreegateway.com/web/3.16.0/js/three-d-secure.min.js"></script>
-		
+
 		<script type='text/javascript'>
-			var clientToken = "<?php echo $clientToken; ?>";
-			var components = {
-			  client: null,
-			  threeDSecure: null,
-			  hostedFields: null,
-			  paypalCheckout: null,
-			};
-			var my3DSContainer;
-			
-			var modal = document.getElementById('pp-btree-hosted-fields-modal');
-			var bankFrame = document.querySelector('.pp-btree-hosted-fields-bt-modal-body');
-			var closeFrame = document.getElementById('pp-btree-hosted-fields-text-close');
-			var form = document.querySelector('.wpsc_checkout_forms');
-			var submit = document.querySelector('.make_purchase.wpsc_buy_button');
-			var paypalButton = document.querySelector('#pp_braintree_pp_button');
+		var clientToken = "<?php echo $clientToken; ?>";
+		var components = {
+		  client: null,
+		  threeDSecure: null,
+		  hostedFields: null,
+		  paypalCheckout: null,
+		};
+		var my3DSContainer;
 
-			function create3DSecure( clientInstance ) {
-				// DO 3DS
-				<?php if ( $braintree_threedee_secure == 'on' ) { ?>
+		var modal = document.getElementById('pp-btree-hosted-fields-modal');
+		var bankFrame = document.querySelector('.pp-btree-hosted-fields-bt-modal-body');
+		var closeFrame = document.getElementById('pp-btree-hosted-fields-text-close');
+		var form = document.querySelector('.wpsc_checkout_forms');
+		var submit = document.querySelector('.make_purchase.wpsc_buy_button');
+		var paypalButton = document.querySelector('#pp_braintree_pp_button');
 
-					braintree.threeDSecure.create({
-						client:  clientInstance
-					}, function (threeDSecureErr, threeDSecureInstance) {
-						if (threeDSecureErr) {
-						  // Handle error in 3D Secure component creation
-						  console.error('error in 3D Secure component creation');
-						  return;
-						}
-						components.threeDSecure = threeDSecureInstance;
-					});
-				<?php } ?>
-			}
+		function create3DSecure( clientInstance ) {
+			// DO 3DS
+			<?php if ( $braintree_threedee_secure == 'on' ) { ?>
 
-			function addFrame(err, iframe) {
-				// Set up your UI and add the iframe.
-				bankFrame.appendChild(iframe);
-				modal.classList.remove('pp-btree-hosted-fields-modal-hidden');
-				modal.focus();
-			}
-
-			function removeFrame() {
-				var iframe = bankFrame.querySelector('iframe');
-				modal.classList.add('pp-btree-hosted-fields-modal-hidden');
-				iframe.parentNode.removeChild(iframe);
-				submit.removeAttribute('disabled');
-			}
-
-			if ( jQuery( 'input[name=\"custom_gateway\"]' ).val() === 'wpsc_merchant_braintree_v_zero' ) {
-				braintree.client.create({
-				  authorization: clientToken
-				}, function(err, clientInstance) {
-				  if (err) {
-					console.error(err);
-					return;
-				  }
-
-				  components.client = clientInstance;
-
-				  <?php
-				  if ( (bool) get_option( 'bt_vzero_cc_payments' ) == true ) { ?>				  
-					  createHostedFields(clientInstance);
-					  create3DSecure( clientInstance );
-				  <?php }
-				  if ( (bool) get_option( 'bt_vzero_pp_payments' ) == true ) { ?>
-					createPayPalCheckout(clientInstance );
-				  <?php } ?>
+				braintree.threeDSecure.create({
+					client:  clientInstance
+				}, function (threeDSecureErr, threeDSecureInstance) {
+					if (threeDSecureErr) {
+					  // Handle error in 3D Secure component creation
+					  console.error('error in 3D Secure component creation');
+					  return;
+					}
+					components.threeDSecure = threeDSecureInstance;
 				});
-			}
-			
-			if( components.threeDSecure ) {
-				closeFrame.addEventListener('click', function () {
-				  components.threeDSecure.cancelVerifyCard(removeFrame());
-				});
-			}
+			<?php } ?>
+		}
 
-			function createHostedFields( clientInstance ) {
+		function addFrame(err, iframe) {
+			// Set up your UI and add the iframe.
+			bankFrame.appendChild(iframe);
+			modal.classList.remove('pp-btree-hosted-fields-modal-hidden');
+			modal.focus();
+		}
+
+		function removeFrame() {
+			var iframe = bankFrame.querySelector('iframe');
+			modal.classList.add('pp-btree-hosted-fields-modal-hidden');
+			iframe.parentNode.removeChild(iframe);
+			submit.removeAttribute('disabled');
+		}
+
+		function createHostedFields( clientInstance ) {
 			braintree.hostedFields.create({
 				client: clientInstance,
 				styles: {
@@ -1144,7 +1116,7 @@ function pp_braintree_enqueue_js() {
 				}
 
 				components.hostedFields = hostedFieldsInstance;
-				  
+
 				submit.removeAttribute('disabled');
 
 				form.addEventListener('submit', function (event) {
@@ -1166,7 +1138,7 @@ function pp_braintree_enqueue_js() {
 								}, function (err, response) {
 									// Handle response
 									if (!err) {
-									
+
 										var liabilityShifted = response.liabilityShifted; // true || false
 										var liabilityShiftPossible =  response.liabilityShiftPossible; // true || false
 
@@ -1194,7 +1166,7 @@ function pp_braintree_enqueue_js() {
 												<?php } ?>
 											}
 										}
-										
+
 										// 3D Secure finished. Using response.nonce you may proceed with the transaction with the associated server side parameters below.
 										document.getElementById('pp_btree_method_nonce').value = response.nonce;
 										jQuery(".wpsc_checkout_forms").submit();
@@ -1215,86 +1187,86 @@ function pp_braintree_enqueue_js() {
 			});
 		};
 
-			function createPayPalCheckout( clientInstance ) {
-				  braintree.paypalCheckout.create({
-					client: clientInstance
-				  }, function (paypalErr, paypalCheckoutInstance) {
-					if (paypalErr) {
-					  console.error('Error creating PayPal:', paypalErr);
-					  alert(paypalErr.code);
-					  return;
-					}
-					
-					components.paypalCheckout = paypalCheckoutInstance;
+		function createPayPalCheckout( clientInstance ) {
+			  braintree.paypalCheckout.create({
+				client: clientInstance
+			  }, function (paypalErr, paypalCheckoutInstance) {
+				if (paypalErr) {
+				  console.error('Error creating PayPal:', paypalErr);
+				  alert(paypalErr.code);
+				  return;
+				}
 
-					paypalButton.removeAttribute('disabled');
+				components.paypalCheckout = paypalCheckoutInstance;
 
-					// Set up PayPal with the checkout.js library
-					paypal.Button.render({
-						env: '<?php if ( $sandbox ) { echo 'sandbox'; } else { echo 'production'; } ?>',
+				paypalButton.removeAttribute('disabled');
 
-						style: {
-							label: '<?php echo $pp_but_label; ?>',
-							size:  '<?php echo $pp_but_size; ?>',
-							shape: '<?php echo $pp_but_shape; ?>',
-							color: '<?php echo $pp_but_colour; ?>'
-						},
-					  
-					  payment: function () {
-						return components.paypalCheckout.createPayment({
-						  flow: 'checkout', // Required
-						  intent: 'sale',
-						  amount: <?php echo wpsc_cart_total(false); ?>, // Required
-						  currency: '<?php echo wpsc_get_currency_code(); ?>', // Required
-						  locale: 'en_US',
-						  useraction: 'commit',
-						  enableShippingAddress: false,
-						  <?php
-						  if ( wpsc_uses_shipping() ) {
-						  ?>
-						  enableShippingAddress: true,
-						  shippingAddressEditable: false,
-						  shippingAddressOverride: {
-							recipientName: jQuery( 'input[title="billingfirstname"]' ).val() + jQuery( 'input[title="billinglastname"]' ).val(),
-							line1: jQuery( 'textarea[title="billingaddress"]' ).text(),
-							city: jQuery( 'input[title="billingcity"]' ).val(),
-							countryCode: 'US',
-							postalCode: jQuery( 'input[title="billingpostcode"]' ).val(),
-							state: replace_state_code( jQuery( 'input[title="billingstate"]' ).val() ),
-						  }
-						  <?php
-						  }
-						  ?>
-						});
-					  },
+				// Set up PayPal with the checkout.js library
+				paypal.Button.render({
+					env: '<?php if ( $sandbox ) { echo 'sandbox'; } else { echo 'production'; } ?>',
 
-					  onAuthorize: function (data, actions) {
-						return components.paypalCheckout.tokenizePayment(data)
-						  .then(function (payload) {
-							// Submit `payload.nonce` to your server
-							paypalButton.setAttribute('disabled', true);
-							document.getElementById('pp_btree_method_nonce').value = payload.nonce;
-							jQuery(".wpsc_checkout_forms").submit();
-						  });
-					  },
+					style: {
+						label: '<?php echo $pp_but_label; ?>',
+						size:  '<?php echo $pp_but_size; ?>',
+						shape: '<?php echo $pp_but_shape; ?>',
+						color: '<?php echo $pp_but_colour; ?>'
+					},
 
-					  onCancel: function (data) {
-						console.log('checkout.js payment cancelled', JSON.stringify(data, 0, 2));
-					  },
-
-					  onError: function (err) {
-						console.error('checkout.js error', err);
+				  payment: function () {
+					return components.paypalCheckout.createPayment({
+					  flow: 'checkout', // Required
+					  intent: 'sale',
+					  amount: <?php echo wpsc_cart_total(false); ?>, // Required
+					  currency: '<?php echo wpsc_get_currency_code(); ?>', // Required
+					  locale: 'en_US',
+					  useraction: 'commit',
+					  enableShippingAddress: false,
+					  <?php
+					  if ( wpsc_uses_shipping() ) {
+					  ?>
+					  enableShippingAddress: true,
+					  shippingAddressEditable: false,
+					  shippingAddressOverride: {
+						recipientName: jQuery( 'input[title="billingfirstname"]' ).val() + jQuery( 'input[title="billinglastname"]' ).val(),
+						line1: jQuery( 'textarea[title="billingaddress"]' ).text(),
+						city: jQuery( 'input[title="billingcity"]' ).val(),
+						countryCode: 'US',
+						postalCode: jQuery( 'input[title="billingpostcode"]' ).val(),
+						state: replace_state_code( jQuery( 'input[title="billingstate"]' ).val() ),
 					  }
-					}, paypalButton).then(function () {
-					  // The PayPal button will be rendered in an html element with the id
-					  // `paypal-button`. This function will be called when the PayPal button
-					  // is set up and ready to be used.
+					  <?php
+					  }
+					  ?>
 					});
+				  },
 
-				  });
-			};
-			
-			function replace_state_code( state ) {
+				  onAuthorize: function (data, actions) {
+					return components.paypalCheckout.tokenizePayment(data)
+					  .then(function (payload) {
+						// Submit `payload.nonce` to your server
+						paypalButton.setAttribute('disabled', true);
+						document.getElementById('pp_btree_method_nonce').value = payload.nonce;
+						jQuery(".wpsc_checkout_forms").submit();
+					  });
+				  },
+
+				  onCancel: function (data) {
+					console.log('checkout.js payment cancelled', JSON.stringify(data, 0, 2));
+				  },
+
+				  onError: function (err) {
+					console.error('checkout.js error', err);
+				  }
+				}, paypalButton).then(function () {
+				  // The PayPal button will be rendered in an html element with the id
+				  // `paypal-button`. This function will be called when the PayPal button
+				  // is set up and ready to be used.
+				});
+
+			  });
+		};
+
+		function replace_state_code( state ) {
 				var states = {
 					'Alabama':'AL',
 					'Alaska':'AK',
@@ -1346,11 +1318,46 @@ function pp_braintree_enqueue_js() {
 					'West Virginia':'WV',
 					'Wisconsin':'WI',
 					'Wyoming':'WY'
-	
+
 				};
-				
+
 				return states[state];
 			}
+
+		function wpscBootstrapBraintree() {
+			if ( jQuery( 'input[name=\"custom_gateway\"]' ).val() !== 'wpsc_merchant_braintree_v_zero' ) {
+				return;
+			}
+
+			braintree.client.create({
+			  authorization: clientToken
+			}, function(err, clientInstance) {
+			  if (err) {
+				console.error(err);
+				return;
+			  }
+
+			  components.client = clientInstance;
+
+			  <?php
+			  if ( (bool) get_option( 'bt_vzero_cc_payments' ) == true ) { ?>
+				  createHostedFields(clientInstance);
+				  create3DSecure( clientInstance );
+			  <?php }
+			  if ( (bool) get_option( 'bt_vzero_pp_payments' ) == true ) { ?>
+				createPayPalCheckout(clientInstance );
+			  <?php } ?>
+			});
+		
+			if ( components.threeDSecure ) {
+				closeFrame.addEventListener('click', function () {
+				  components.threeDSecure.cancelVerifyCard(removeFrame());
+				});
+			}
+		};
+
+		jQuery( document ).on( 'ready', 'wpscBootstrapBraintree' );
+		jQuery( 'input[name=\"custom_gateway\"]' ).on( 'click', 'wpscBootstrapBraintree' );
 		</script>
 	<?php
 }
