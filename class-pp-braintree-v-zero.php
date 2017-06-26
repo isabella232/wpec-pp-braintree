@@ -8,10 +8,7 @@ class BraintreeTransactionException extends Exception {
 
 class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 
-	var $name = '';
-
 	function __construct( $purchase_id = null, $is_receiving = false ) {
-		$this->name = __( 'Braintree V.Zero', 'wp-e-commerce' );
 
 		parent::__construct( $purchase_id, $is_receiving );
 		add_action( 'wp_enqueue_scripts', array( $this, 'payment_scripts' ) );
@@ -950,12 +947,13 @@ function pp_braintree_enqueue_js() {
 		$braintree_threedee_secure = get_option( 'braintree_threedee_secure' );
 		$braintree_threedee_secure_only = get_option( 'braintree_threedee_secure_only' );
 
+
 		// Check if we are using Auth and connected
 		if ( bt_auth_can_connect() && bt_auth_is_connected() ) {
 			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
 
-			$gateway = new Braintree_Gateway(array(
-				'accessToken' => $acc_token,
+			$gateway = new Braintree_Gateway( array(
+				'accessToken' => $acc_token
 			));
 
 			$clientToken = $gateway->clientToken()->generate();
@@ -1032,43 +1030,21 @@ function pp_braintree_enqueue_js() {
 		<script src="https://js.braintreegateway.com/web/3.16.0/js/three-d-secure.min.js"></script>
 		
 		<script type='text/javascript'>
-			if ( jQuery( 'input[name=\"custom_gateway\"]' ).val() === 'wpsc_merchant_braintree_v_zero' ) {
-				var clientToken = "<?php echo $clientToken; ?>";
-				var components = {
-				  client: null,
-				  threeDSecure: null,
-				  hostedFields: null,
-				  paypalCheckout: null,
-				};
-				var my3DSContainer;
-				
-				var modal = document.getElementById('pp-btree-hosted-fields-modal');
-				var bankFrame = document.querySelector('.pp-btree-hosted-fields-bt-modal-body');
-				var closeFrame = document.getElementById('pp-btree-hosted-fields-text-close');
-				var form = document.querySelector('.wpsc_checkout_forms');
-				var submit = document.querySelector('.make_purchase.wpsc_buy_button');
-				var paypalButton = document.querySelector('#pp_braintree_pp_button');
-
-				braintree.client.create({
-				  authorization: clientToken
-				}, function(err, clientInstance) {
-				  if (err) {
-					console.error(err);
-					return;
-				  }
-
-				  components.client = clientInstance;
-
-				  <?php
-				  if ( (bool) get_option( 'bt_vzero_cc_payments' ) == true ) { ?>				  
-					  createHostedFields(clientInstance);
-					  create3DSecure( clientInstance );
-				  <?php }
-				  if ( (bool) get_option( 'bt_vzero_pp_payments' ) == true ) { ?>
-					createPayPalCheckout(clientInstance );
-				  <?php } ?>
-				});
-			}
+			var clientToken = "<?php echo $clientToken; ?>";
+			var components = {
+			  client: null,
+			  threeDSecure: null,
+			  hostedFields: null,
+			  paypalCheckout: null,
+			};
+			var my3DSContainer;
+			
+			var modal = document.getElementById('pp-btree-hosted-fields-modal');
+			var bankFrame = document.querySelector('.pp-btree-hosted-fields-bt-modal-body');
+			var closeFrame = document.getElementById('pp-btree-hosted-fields-text-close');
+			var form = document.querySelector('.wpsc_checkout_forms');
+			var submit = document.querySelector('.make_purchase.wpsc_buy_button');
+			var paypalButton = document.querySelector('#pp_braintree_pp_button');
 
 			function create3DSecure( clientInstance ) {
 				// DO 3DS
@@ -1101,6 +1077,28 @@ function pp_braintree_enqueue_js() {
 				submit.removeAttribute('disabled');
 			}
 
+			if ( jQuery( 'input[name=\"custom_gateway\"]' ).val() === 'wpsc_merchant_braintree_v_zero' ) {
+				braintree.client.create({
+				  authorization: clientToken
+				}, function(err, clientInstance) {
+				  if (err) {
+					console.error(err);
+					return;
+				  }
+
+				  components.client = clientInstance;
+
+				  <?php
+				  if ( (bool) get_option( 'bt_vzero_cc_payments' ) == true ) { ?>				  
+					  createHostedFields(clientInstance);
+					  create3DSecure( clientInstance );
+				  <?php }
+				  if ( (bool) get_option( 'bt_vzero_pp_payments' ) == true ) { ?>
+					createPayPalCheckout(clientInstance );
+				  <?php } ?>
+				});
+			}
+			
 			if( components.threeDSecure ) {
 				closeFrame.addEventListener('click', function () {
 				  components.threeDSecure.cancelVerifyCard(removeFrame());
