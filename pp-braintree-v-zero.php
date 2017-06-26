@@ -51,6 +51,7 @@ class WPEC_PP_Braintree_V_Zero {
 	}
 
 	public static function includes() {
+		require_once( 'braintree/lib/Braintree.php' );
 	}
 
 	public static function add_actions() {
@@ -69,10 +70,10 @@ class WPEC_PP_Braintree_V_Zero {
 	public function register_gateway( $gateways ) {
 		$num = max( array_keys( $gateways ) ) + 1;
 		$gateways[ $num ] = array(
-			'name'                   => __( 'Braintree V.Zero', 'wp-e-commerce' ),
+			'name'                   => __( 'PayPal Powered by Braintree', 'wp-e-commerce' ),
 			'api_version'            => 2.0,
 			'has_recurring_billing'  => true,
-			'display_name'           => __( 'Braintree Payment', 'wp-e-commerce' ),
+			'display_name'           => __( 'PayPal Powered by Braintree', 'wp-e-commerce' ),
 			'image'                  => WPSC_URL . '/images/cc.gif',
 			'wp_admin_cannot_cancel' => false,
 			'requirements' => array(

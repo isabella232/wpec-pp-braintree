@@ -222,7 +222,6 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 			'business_currency' => wpsc_get_currency_code(),
 			'business_website'  => get_bloginfo( 'url' ),
 			'redirect'          => base64_encode( $redirect_url ),
-			'scopes'            => 'read_write'
 		);
 
 		if ( ! empty( $current_user->user_firstname ) ) {
@@ -287,7 +286,8 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 			if ( bt_auth_is_connected() ) {
 				$output .= "<td><a href='". esc_url( $connect_url ) . "' class='button-primary'>" . esc_html__( 'Disconnect from PayPal Powered by Braintree', 'wpec-paypal-braintree-vzero' ) . "</a></td>";
 			} else {
-				$output .= '<td><a href="' . esc_url( $connect_url ) . '" class="wpec-braintree-connect-button"><img src="' . esc_url( $button_image_url ) . '"/></a></td>';
+				$output .= '<td><a href="' . esc_url( $connect_url ) . '" class="wpec-braintree-connect-button"><img src="' . esc_url( $button_image_url ) . '"/></a></td>
+							<td></td>';
 			}
 			
 			$output .= '</tr>';
@@ -736,8 +736,6 @@ function getMerchantCurrencies() {
  */
 function setBraintreeConfiguration() {
 	global $merchant_currency, $braintree_settings;
-
-	require_once( 'braintree/lib/Braintree.php' );
 	
 	// Get setting values
 	$braintree_settings['sandbox_mode']     			= get_option( 'braintree_sandbox_mode' );
@@ -952,8 +950,20 @@ function pp_braintree_enqueue_js() {
 		$braintree_threedee_secure = get_option( 'braintree_threedee_secure' );
 		$braintree_threedee_secure_only = get_option( 'braintree_threedee_secure_only' );
 
-		setBraintreeConfiguration();
-		$clientToken = Braintree_ClientToken::generate();
+		// Check if we are using Auth and connected
+		if ( bt_auth_can_connect() && bt_auth_is_connected() ) {
+			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
+
+			$gateway = new Braintree_Gateway(array(
+				'accessToken' => $acc_token,
+			));
+
+			$clientToken = $gateway->clientToken()->generate();
+
+		} else {
+			setBraintreeConfiguration();
+			$clientToken = Braintree_ClientToken::generate();
+		}
 
 		$sandbox = $braintree_settings['sandbox_mode'] == 'on' ? true : false ;
 
@@ -1046,7 +1056,7 @@ function pp_braintree_enqueue_js() {
 					console.error(err);
 					return;
 				  }
-				  
+
 				  components.client = clientInstance;
 
 				  <?php
