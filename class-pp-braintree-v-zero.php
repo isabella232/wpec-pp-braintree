@@ -1325,7 +1325,11 @@ function pp_braintree_enqueue_js() {
 			}
 
 		function wpscBootstrapBraintree() {
-			if ( jQuery( 'input[name=\"custom_gateway\"]' ).val() !== 'wpsc_merchant_braintree_v_zero' ) {
+			if ( jQuery('input[name=custom_gateway]:checked').val() !== 'wpsc_merchant_braintree_v_zero' ) {
+				return;
+			}
+
+			if ( components.client ) {
 				return;
 			}
 
@@ -1348,16 +1352,16 @@ function pp_braintree_enqueue_js() {
 				createPayPalCheckout(clientInstance );
 			  <?php } ?>
 			});
-		
+
 			if ( components.threeDSecure ) {
 				closeFrame.addEventListener('click', function () {
 				  components.threeDSecure.cancelVerifyCard(removeFrame());
 				});
 			}
-		};
+		}
 
-		jQuery( document ).on( 'ready', 'wpscBootstrapBraintree' );
-		jQuery( 'input[name=\"custom_gateway\"]' ).on( 'click', 'wpscBootstrapBraintree' );
+		jQuery( document ).ready( wpscBootstrapBraintree );
+		jQuery( 'input[name=\"custom_gateway\"]' ).change( wpscBootstrapBraintree );
 		</script>
 	<?php
 }
