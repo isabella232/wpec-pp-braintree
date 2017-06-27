@@ -56,11 +56,12 @@ class WPEC_PP_Braintree_V_Zero {
 
 	public static function add_actions() {
 		add_action( 'wpsc_init', array( self::$instance, 'init' ), 2 );
-		add_action( 'wpsc_init', array( self::$instance, 'pp_braintree_checkout_fields' ) );
+		//add_action( 'wpsc_init', array( self::$instance, 'pp_braintree_checkout_fields' ) );
 	}
 
 	public static function add_filters() {
 		add_filter( 'wpsc_merchants_modules', array( self::$instance, 'register_gateway' ), 50 );
+		add_filter( 'wpsc_gateway_checkout_form_wpsc_merchant_braintree_v_zero', array( self::$instance, 'pp_braintree_checkout_fields') );
 	}
 
 	public function init() {
@@ -92,27 +93,26 @@ class WPEC_PP_Braintree_V_Zero {
 		return $gateways;
 	}
 
-	public function pp_braintree_checkout_fields() {
-		global $gateway_checkout_form_fields;
 
-		if ( in_array( 'wpsc_merchant_braintree_v_zero', (array) get_option( 'custom_gateway_options' ) ) ) {
-			ob_start(); 
+	public function pp_braintree_checkout_fields() {
+		$output = '';
 
 		if ( (bool) get_option( 'bt_vzero_pp_payments' ) == true ) {
-			echo '<div id="pp_braintree_pp_button"></div>';
+			$output .= '<tr><td><div id="pp_braintree_pp_button"></div></td></tr>';
 		}
 
 		if ( (bool) get_option( 'bt_vzero_cc_payments' ) == true ) {
-			echo '<br>
-				<label class="hosted-fields--label" for="card-number">Card Number</label>
-				<div id="card-number" class="hosted-field"></div>
+			$output .= '<tr><td><label class="hosted-fields--label" for="card-number">Card Number</label>
+							<div id="card-number" class="hosted-field"></div>
+						</td></tr>
+						<tr><td><label class="hosted-fields--label" for="expiration-date">Expiration Date</label>
+							<div id="card-exp" class="hosted-field"></div>
+						</td></tr>
+						<tr><td><label class="hosted-fields--label" for="cvv">CVV</label>
+							<div id="card-cvv" class="hosted-field"></div></td>
+						</tr>
+						<tr><td><input type="hidden" id="pp_btree_method_nonce" name="pp_btree_method_nonce" value="" /></td></tr>
 
-				<label class="hosted-fields--label" for="expiration-date">Expiration Date</label>
-					<div id="card-exp" class="hosted-field"></div>
-				<label class="hosted-fields--label" for="cvv">CVV</label>
-					<div id="card-cvv" class="hosted-field"></div>
-					<input type="hidden" id="pp_btree_method_nonce" name="pp_btree_method_nonce" value="" />
-				
 				<div id="pp-btree-hosted-fields-modal" class="pp-btree-hosted-fields-modal-hidden" tabindex="-1">
 					<div class="pp-btree-hosted-fields-bt-mask"></div>
 						<div class="pp-btree-hosted-fields-bt-modal-frame">
@@ -125,8 +125,7 @@ class WPEC_PP_Braintree_V_Zero {
 				</div>';
 		}
 
-		$gateway_checkout_form_fields['wpsc_merchant_braintree_v_zero'] = ob_get_clean();
-		}
+		return $output;
 	}
 	
 	/**
