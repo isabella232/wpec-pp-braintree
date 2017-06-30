@@ -200,7 +200,7 @@ class WPEC_PP_Braintree_V_Zero {
 				$connected = false;
 			}
 
-			wp_safe_redirect( add_query_arg( 'wpec_braintree_connected', $connected, admin_url( 'options-general.php?page=wpsc-settings&tab=gateway&payment_gateway_id=wpsc_merchant_braintree_v_zero' ) ) );
+			wp_safe_redirect( add_query_arg( 'wpec_braintree_connected', $connected, admin_url( 'options-general.php?page=wpsc-settings&tab=gateway' ) ) );
 			exit;
 		}
 	}
@@ -232,7 +232,7 @@ class WPEC_PP_Braintree_V_Zero {
 		delete_option( 'wpec_braintree_auth_environment' );
 		delete_option( 'wpec_braintree_auth_merchant_id' );
 
-		wp_safe_redirect( add_query_arg( 'wpec_braintree_disconnected', true, admin_url( 'options-general.php?page=wpsc-settings&tab=gateway&payment_gateway_id=wpsc_merchant_braintree_v_zero' ) ) );
+		wp_safe_redirect( add_query_arg( 'wpec_braintree_disconnected', true, admin_url( 'options-general.php?page=wpsc-settings&tab=gateway' ) ) );
 		exit;		
 	}
 }
