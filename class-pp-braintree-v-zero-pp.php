@@ -14,7 +14,7 @@ class wpsc_merchant_braintree_v_zero_pp extends wpsc_merchant_braintree_v_zero {
 	public function submit() {
 		global $braintree_settings;
 
-		setBraintreeConfiguration();
+		self::setBraintreeConfiguration();
 
 		$paymentAmount = $this->cart_data['total_price'];
 
@@ -54,32 +54,37 @@ class wpsc_merchant_braintree_v_zero_pp extends wpsc_merchant_braintree_v_zero {
 			$gateway = new Braintree_Gateway( array(
 				'accessToken' => $acc_token,
 			));
-			
-			
+
 			$result = $gateway->transaction()->sale([
 				"amount" => $paymentAmount,
-				'merchantAccountId' => 'USD',
 				"paymentMethodNonce" => $payment_method_nonce,
 				"orderId" => $session_id,
-				"descriptor" => [
-				  "name" => "Descriptor displayed in customer CC statements. 22 char max"
+				"customer" => [
+					"firstName" => $billing_address['first_name'],
+					"lastName" => $billing_address['last_name'],
+					"phone" => $billing_address['phone'],
+					"email" => $email_address
+				],
+				"billing" => [
+					"firstName" => $billing_address['first_name'],
+					"lastName" => $billing_address['last_name'],
+					"streetAddress" => $billing_address['address'],
+					"locality" => $billing_address['city'],
+					"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.billing_region' ), 'code' ),
+					"postalCode" => $billing_address['post_code'],
+					"countryCodeAlpha2" => $billing_address['country']
 				],
 				"shipping" => [
-				  "firstName" => "Jen",
-				  "lastName" => "Smith",
-				  "company" => "Braintree",
-				  "streetAddress" => "1 E 1st St",
-				  "extendedAddress" => "Suite 403",
-				  "locality" => "Bartlett",
-				  "region" => "IL",
-				  "postalCode" => "60103",
-				  "countryCodeAlpha2" => "US"
-				],
+					"firstName" => $shipping_address['first_name'],
+					"lastName" => $shipping_address['last_name'],
+					"streetAddress" => $shipping_address['address'],
+					"locality" => $shipping_address['city'],
+					"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.delivery_region' ), 'code' ),
+					"postalCode" => $shipping_address['post_code'],
+					"countryCodeAlpha2" => $shipping_address['country']
+				],				
 				"options" => [
-				  "paypal" => [
-					"customField" => $_POST["PayPal custom field"],
-					"description" => $_POST["Description for PayPal email receipt"]
-				  ],
+				  "submitForSettlement" => $submit_for_settlement,
 				]
 			]);
 			
@@ -199,8 +204,8 @@ class wpsc_merchant_braintree_v_zero_pp extends wpsc_merchant_braintree_v_zero {
 							Sandbox Mode
 						</td>
 						<td>
-							<label><input ' . checked( 'on', get_option( 'braintree_sandbox_mode' ), false ) . ' type="radio" name="wpsc_options[braintree_sandbox_mode]" value="on" /> Yes</label>&nbsp;&nbsp;&nbsp;
-							<label><input ' . checked( 'off', get_option( 'braintree_sandbox_mode' ), false ) . ' type="radio" name="wpsc_options[braintree_sandbox_mode]" value="off" /> No</label>
+							<label><input ' . checked( 'on', get_option( 'braintree_pp_sandbox_mode' ), false ) . ' type="radio" name="wpsc_options[braintree_pp_sandbox_mode]" value="on" /> Yes</label>&nbsp;&nbsp;&nbsp;
+							<label><input ' . checked( 'off', get_option( 'braintree_pp_sandbox_mode' ), false ) . ' type="radio" name="wpsc_options[braintree_pp_sandbox_mode]" value="off" /> No</label>
 						</td>
 					</tr>
 					<tr>

@@ -516,7 +516,9 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 				setBraintreeConfiguration();
 				$clientToken = Braintree_ClientToken::generate();
 			}
-			$sandbox = $braintree_settings['sandbox_mode'] == 'on' ? true : false ;
+			
+			$pp_sandbox = get_option( 'braintree_pp_sandbox_mode', 'on' );
+			$sandbox = $pp_sandbox == 'on' ? true : false ;
 			// Set PP Button styles
 			$pp_but_label = get_option( 'bt_vzero_pp_payments_but_label' ) != false ? get_option( 'bt_vzero_pp_payments_but_label' ) : 'checkout' ;
 			$pp_but_colour = get_option( 'bt_vzero_pp_payments_but_colour' ) != false ? get_option( 'bt_vzero_pp_payments_but_colour' ) : 'gold' ;
@@ -848,6 +850,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 				if ( jQuery('input[name=custom_gateway]:checked').val() == 'wpsc_merchant_braintree_v_zero_pp' ) {
 					if ( e && e.keyCode == 13 ) {
 						e.preventDefault();
+						return;
 					}
 					if ( pp_button.is(":visible") ) {
 						pp_button.hide();
