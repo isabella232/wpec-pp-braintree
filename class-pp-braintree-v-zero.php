@@ -657,6 +657,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 					components.hostedFields = hostedFieldsInstance;
 					submit.removeAttribute('disabled');
 					form.addEventListener('submit', function (event) {
+						if ( jQuery('input[name=custom_gateway]:checked').val() !== 'wpsc_merchant_braintree_v_zero_cc' ) { return; }
 						event.preventDefault();
 						components.hostedFields.tokenize(function (tokenizeErr, payload) {
 							if (tokenizeErr) {
@@ -845,7 +846,6 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 			function wpscCheckSubmitStatus( e ) {
 				var pp_button = jQuery(".make_purchase.wpsc_buy_button");
 				if ( jQuery('input[name=custom_gateway]:checked').val() == 'wpsc_merchant_braintree_v_zero_pp' ) {
-					console.log(e);
 					if ( e && e.keyCode == 13 ) {
 						e.preventDefault();
 					}
@@ -858,7 +858,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 			}
 			function wpscBootstrapBraintree() {
 				//Disable the regular purchase button if using PayPal
-				wpscCheckSubmitStatus()
+				wpscCheckSubmitStatus();
 				if ( jQuery('input[name=custom_gateway]:checked').val() !== 'wpsc_merchant_braintree_v_zero_cc' && jQuery('input[name=custom_gateway]:checked').val() !== 'wpsc_merchant_braintree_v_zero_pp' ) {
 					return;
 				}
