@@ -842,8 +842,24 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 					};
 					return states[state];
 				}
+			function wpscCheckSubmitStatus( e ) {
+				var pp_button = jQuery(".make_purchase.wpsc_buy_button");
+				if ( jQuery('input[name=custom_gateway]:checked').val() == 'wpsc_merchant_braintree_v_zero_pp' ) {
+					console.log(e);
+					if ( e && e.keyCode == 13 ) {
+						e.preventDefault();
+					}
+					if ( pp_button.is(":visible") ) {
+						pp_button.hide();
+						return;
+					}		
+				}
+				pp_button.show();
+			}
 			function wpscBootstrapBraintree() {
-				if ( jQuery('input[name=custom_gateway]:checked').val() !== 'wpsc_merchant_braintree_v_zero_cc' ) {
+				//Disable the regular purchase button if using PayPal
+				wpscCheckSubmitStatus()
+				if ( jQuery('input[name=custom_gateway]:checked').val() !== 'wpsc_merchant_braintree_v_zero_cc' && jQuery('input[name=custom_gateway]:checked').val() !== 'wpsc_merchant_braintree_v_zero_pp' ) {
 					return;
 				}
 				if ( components.client ) {
@@ -874,6 +890,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 			}
 
 			jQuery( document ).ready( wpscBootstrapBraintree );
+			jQuery( document ).on( 'keypress', '.wpsc_checkout_forms', wpscCheckSubmitStatus );
 			jQuery( 'input[name=\"custom_gateway\"]' ).change( wpscBootstrapBraintree );
 			</script>
 		<?php
