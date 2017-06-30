@@ -125,10 +125,6 @@ class WPEC_PP_Braintree_V_Zero {
 	public function pp_braintree_cc_checkout_fields() {
 		$output = '';
 
-		if ( (bool) get_option( 'bt_vzero_pp_payments' ) == true ) {
-			$output .= '<tr><td><div id="pp_braintree_pp_button"></div></td></tr>';
-		}
-
 		if ( (bool) get_option( 'bt_vzero_cc_payments' ) == true ) {
 			$output .= '<tr><td><label class="hosted-fields--label" for="card-number">Card Number</label>
 							<div id="bt-cc-card-number" class="hosted-field"></div>
