@@ -56,22 +56,26 @@ class WPEC_PP_Braintree_V_Zero {
 
 	public static function add_actions() {
 		add_action( 'wpsc_init', array( self::$instance, 'init' ), 2 );
-		//add_action( 'wpsc_init', array( self::$instance, 'pp_braintree_checkout_fields' ) );
+		add_action( 'wpsc_bottom_of_shopping_cart' , array( 'wpsc_merchant_braintree_v_zero', 'pp_braintree_enqueue_js' ), 100 );
 	}
 
 	public static function add_filters() {
 		add_filter( 'wpsc_merchants_modules', array( self::$instance, 'register_gateway' ), 50 );
-		add_filter( 'wpsc_gateway_checkout_form_wpsc_merchant_braintree_v_zero', array( self::$instance, 'pp_braintree_checkout_fields') );
+		add_action( 'wpsc_inside_shopping_cart', array( self::$instance, 'te_v1_insert_hidden_field' ) );
+		add_filter( 'wpsc_gateway_checkout_form_wpsc_merchant_braintree_v_zero_cc', array( self::$instance, 'pp_braintree_cc_checkout_fields') );
+		add_filter( 'wpsc_gateway_checkout_form_wpsc_merchant_braintree_v_zero_pp', array( self::$instance, 'pp_braintree_pp_checkout_fields') );
 	}
 
 	public function init() {
 		include_once WPEC_PPBRAINTREE_VZERO_PLUGIN_DIR . '/class-pp-braintree-v-zero.php';
+		include_once WPEC_PPBRAINTREE_VZERO_PLUGIN_DIR . '/class-pp-braintree-v-zero-pp.php';
+		include_once WPEC_PPBRAINTREE_VZERO_PLUGIN_DIR . '/class-pp-braintree-v-zero-cc.php';
 	}
 
 	public function register_gateway( $gateways ) {
 		$num = max( array_keys( $gateways ) ) + 1;
 		$gateways[ $num ] = array(
-			'name'                   => __( 'PayPal Powered by Braintree', 'wp-e-commerce' ),
+			'name'                   => __( 'Braintree - PayPal', 'wp-e-commerce' ),
 			'api_version'            => 2.0,
 			'has_recurring_billing'  => true,
 			'display_name'           => __( 'PayPal Powered by Braintree', 'wp-e-commerce' ),
@@ -80,9 +84,9 @@ class WPEC_PP_Braintree_V_Zero {
 			'requirements' => array(
 				//'php_version' => 5.0
 				),
-			'class_name'      => 'wpsc_merchant_braintree_v_zero',
-			'form'            => 'form_braintree_v_zero',
-			'internalname'    => 'wpsc_merchant_braintree_v_zero'
+			'class_name'      => 'wpsc_merchant_braintree_v_zero_pp',
+			'form'            => array( 'wpsc_merchant_braintree_v_zero_pp', 'form_braintree_v_zero_pp' ),
+			'internalname'    => 'wpsc_merchant_braintree_v_zero_pp'
 		);
 
 		$image = apply_filters( 'wpsc_merchant_image', '', $gateways[$num]['internalname'] );
@@ -90,11 +94,35 @@ class WPEC_PP_Braintree_V_Zero {
 			$gateways[$num]['image'] = $image;
 		}
 
+		$num = max( array_keys( $gateways ) ) + 1;
+		$gateways[ $num ] = array(
+			'name'                   => __( 'Braintree - Credit/Debit Cards', 'wp-e-commerce' ),
+			'api_version'            => 2.0,
+			'has_recurring_billing'  => true,
+			'display_name'           => __( 'Credit Card (secured by PayPal)', 'wp-e-commerce' ),
+			'image'                  => WPSC_URL . '/images/cc.gif',
+			'wp_admin_cannot_cancel' => false,
+			'requirements' => array(
+				//'php_version' => 5.0
+				),
+			'class_name'      => 'wpsc_merchant_braintree_v_zero_cc',
+			'form'            => array( 'wpsc_merchant_braintree_v_zero_cc', 'form_braintree_v_zero_cc' ),
+			'internalname'    => 'wpsc_merchant_braintree_v_zero_cc'
+		);
+
+		$image = apply_filters( 'wpsc_merchant_image', '', $gateways[$num]['internalname'] );
+		if ( ! empty( $image ) ) {
+			$gateways[$num]['image'] = $image;
+		}
+		
 		return $gateways;
 	}
 
+	public function te_v1_insert_hidden_field() {
+		echo '<input type="hidden" id="pp_btree_method_nonce" name="pp_btree_method_nonce" value="" />';
+	}
 
-	public function pp_braintree_checkout_fields() {
+	public function pp_braintree_cc_checkout_fields() {
 		$output = '';
 
 		if ( (bool) get_option( 'bt_vzero_pp_payments' ) == true ) {
@@ -103,15 +131,14 @@ class WPEC_PP_Braintree_V_Zero {
 
 		if ( (bool) get_option( 'bt_vzero_cc_payments' ) == true ) {
 			$output .= '<tr><td><label class="hosted-fields--label" for="card-number">Card Number</label>
-							<div id="card-number" class="hosted-field"></div>
+							<div id="bt-cc-card-number" class="hosted-field"></div>
 						</td></tr>
 						<tr><td><label class="hosted-fields--label" for="expiration-date">Expiration Date</label>
-							<div id="card-exp" class="hosted-field"></div>
+							<div id="bt-cc-card-exp" class="hosted-field"></div>
 						</td></tr>
 						<tr><td><label class="hosted-fields--label" for="cvv">CVV</label>
-							<div id="card-cvv" class="hosted-field"></div></td>
+							<div id="bt-cc-card-cvv" class="hosted-field"></div></td>
 						</tr>
-						<tr><td><input type="hidden" id="pp_btree_method_nonce" name="pp_btree_method_nonce" value="" /></td></tr>
 
 				<div id="pp-btree-hosted-fields-modal" class="pp-btree-hosted-fields-modal-hidden" tabindex="-1">
 					<div class="pp-btree-hosted-fields-bt-mask"></div>
@@ -127,7 +154,17 @@ class WPEC_PP_Braintree_V_Zero {
 
 		return $output;
 	}
-	
+
+	public function pp_braintree_pp_checkout_fields() {
+		$output = '';
+
+		if ( (bool) get_option( 'bt_vzero_pp_payments' ) == true ) {
+			$output .= '<tr><td><div id="pp_braintree_pp_button"></div></td></tr>';
+		}
+
+		return $output;
+	}
+
 	/**
 	 * Handles the Braintree Auth connection response.
 	 *
