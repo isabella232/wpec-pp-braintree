@@ -40,20 +40,12 @@ class wpsc_merchant_braintree_v_zero_cc extends wpsc_merchant_braintree_v_zero {
 		$payment_method_nonce = $_POST['pp_btree_method_nonce'];
 
 		//echo "DEBUG :: "."payment_method_nonce = ".$payment_method_nonce."<br />";
-		if ($braintree_settings['settlement_type'] == 'upfront') {
+		if ( $braintree_settings['settlement_type'] == 'upfront' ) {
 			$submit_for_settlement = true;
 		} else {
 			$submit_for_settlement = false;
 		}
 
-		if ( self::bt_auth_can_connect() && self::bt_auth_is_connected() ) {
-			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
-
-			$gateway = new Braintree_Gateway( array(
-				'accessToken' => $acc_token,
-			));
-		}
-		
 		// Check 3DS transaction.
 		$threedcheck = true;
 		$braintree_threedee_secure = get_option( 'braintree_threedee_secure' );
@@ -89,32 +81,37 @@ class wpsc_merchant_braintree_v_zero_cc extends wpsc_merchant_braintree_v_zero {
 			$gateway = new Braintree_Gateway( array(
 				'accessToken' => $acc_token,
 			));
-			
-			
+
 			$result = $gateway->transaction()->sale([
 				"amount" => $paymentAmount,
-				'merchantAccountId' => 'USD',
 				"paymentMethodNonce" => $payment_method_nonce,
 				"orderId" => $session_id,
-				"descriptor" => [
-				  "name" => "Descriptor displayed in customer CC statements. 22 char max"
+				"customer" => [
+					"firstName" => $billing_address['first_name'],
+					"lastName" => $billing_address['last_name'],
+					"phone" => $billing_address['phone'],
+					"email" => $email_address
+				],
+				"billing" => [
+					"firstName" => $billing_address['first_name'],
+					"lastName" => $billing_address['last_name'],
+					"streetAddress" => $billing_address['address'],
+					"locality" => $billing_address['city'],
+					"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.billing_region' ), 'code' ),
+					"postalCode" => $billing_address['post_code'],
+					"countryCodeAlpha2" => $billing_address['country']
 				],
 				"shipping" => [
-				  "firstName" => "Jen",
-				  "lastName" => "Smith",
-				  "company" => "Braintree",
-				  "streetAddress" => "1 E 1st St",
-				  "extendedAddress" => "Suite 403",
-				  "locality" => "Bartlett",
-				  "region" => "IL",
-				  "postalCode" => "60103",
-				  "countryCodeAlpha2" => "US"
-				],
+					"firstName" => $shipping_address['first_name'],
+					"lastName" => $shipping_address['last_name'],
+					"streetAddress" => $shipping_address['address'],
+					"locality" => $shipping_address['city'],
+					"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.delivery_region' ), 'code' ),
+					"postalCode" => $shipping_address['post_code'],
+					"countryCodeAlpha2" => $shipping_address['country']
+				],				
 				"options" => [
-				  "paypal" => [
-					"customField" => $_POST["PayPal custom field"],
-					"description" => $_POST["Description for PayPal email receipt"]
-				  ],
+				  "submitForSettlement" => $submit_for_settlement,
 				]
 			]);
 			
@@ -198,9 +195,20 @@ class wpsc_merchant_braintree_v_zero_cc extends wpsc_merchant_braintree_v_zero {
 
 	public function check_3ds_risk_transaction( $nonce ) {
 		$pp_3ds_risk = get_option( 'bt_vzero_threedee_secure_risk' ) != false ? get_option( 'bt_vzero_threedee_secure_risk' ) : 'standard' ;
+		$auth_3ds = false;
+
+		if ( self::bt_auth_can_connect() && self::bt_auth_is_connected() ) {
+			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
+
+			$gateway = new Braintree_Gateway( array(
+				'accessToken' => $acc_token,
+			));
+
+			$auth_3ds = true;
+		}
 
 		try {
-			$paymentMethodNonce = Braintree_PaymentMethodNonce::find( $nonce );
+			$paymentMethodNonce = $auth_3ds ? $gateway->PaymentMethodNonce()->find( $nonce ) : Braintree_PaymentMethodNonce::find( $nonce );
 		} catch (Braintree_Exception_NotFound $e) {
 			echo 'Caught exception: ',  $e->getMessage(), "\n";
 			exit;

@@ -312,16 +312,6 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 
 		// Retrieve the correct Braintree settings, depednign on whether
 		// sandbox mode is turne on or off
-		
-		if ( self::bt_auth_can_connect() && self::bt_auth_is_connected() ) {
-			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
-
-			$gateway = new Braintree_Gateway([
-				'accessToken' => $acc_token,
-			]);
-			return;
-		}
-		
 		if ($braintree_settings['sandbox_mode'] == 'on' ) {
 
 			Braintree_Configuration::environment( 'sandbox' );
