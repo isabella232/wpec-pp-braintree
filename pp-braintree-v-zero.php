@@ -79,7 +79,7 @@ class WPEC_PP_Braintree_V_Zero {
 			'api_version'            => 2.0,
 			'has_recurring_billing'  => true,
 			'display_name'           => __( 'PayPal', 'wp-e-commerce' ),
-			'image'                  => WPSC_URL . '/images/cc.gif',
+			'image'                  => WPEC_PPBRAINTREE_VZERO_PLUGIN_URL . 'assets/images/PP_logo_h_200x51.png',
 			'wp_admin_cannot_cancel' => false,
 			'requirements' => array(
 				//'php_version' => 5.0
