@@ -301,18 +301,6 @@ class wpsc_merchant_braintree_v_zero_pp extends wpsc_merchant_braintree_v_zero {
 					<tr id"vzero-pp-button-style">
 						<tr>
 							<td>
-								Button Label:
-							</td>
-							<td>
-								<select name="wpsc_options[bt_vzero_pp_payments_but_label]">
-									<option value="checkout" ' . selected( get_option( 'bt_vzero_pp_payments_but_label' ), 'checkout', false ) . '>Checkout</option>
-									<option value="credit" ' . selected( get_option( 'bt_vzero_pp_payments_but_label' ), 'credit', false ) . '>Credit</option>
-									<option value="pay" ' . selected( get_option( 'bt_vzero_pp_payments_but_label' ), 'pay', false ) . '>Pay</option>
-								</select>
-							</td>
-						</tr>
-						<tr>
-							<td>
 								Button Size:
 							</td>
 							<td>
