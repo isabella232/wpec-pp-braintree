@@ -99,7 +99,7 @@ class WPEC_PP_Braintree_V_Zero {
 			'name'                   => __( 'PayPal powered by Braintree - Cards', 'wp-e-commerce' ),
 			'api_version'            => 2.0,
 			'has_recurring_billing'  => true,
-			'display_name'           => __( 'Credit Card', 'wp-e-commerce' ),
+			'display_name'           => __( 'Credit/Debit Card', 'wp-e-commerce' ),
 			'image'                  => WPSC_URL . '/images/cc.gif',
 			'wp_admin_cannot_cancel' => false,
 			'requirements' => array(
