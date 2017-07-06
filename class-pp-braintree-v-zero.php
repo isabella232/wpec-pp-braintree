@@ -336,7 +336,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 	 */
 	public function checkBraintreeTransaction() {
 
-		setBraintreeConfiguration();
+		self::setBraintreeConfiguration();
 
 		$transaction_id = $_POST['transaction_id'];
 
@@ -353,7 +353,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 	 */
 	public function retrieveBraintreeTransaction($transaction_id) {
 
-		setBraintreeConfiguration();
+		self::setBraintreeConfiguration();
 
 		if ( !empty( $transaction_id ) ) {
 			$transaction = Braintree_Transaction::find( $transaction_id );
@@ -368,7 +368,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 	 */
 	public function submitBraintreeRefund() {
 
-		setBraintreeConfiguration();
+		self::setBraintreeConfiguration();
 
 		$transaction_id = $_POST['refund_payment'];
 
@@ -513,7 +513,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 				));
 				$clientToken = $gateway->clientToken()->generate();
 			} else {
-				setBraintreeConfiguration();
+				self::setBraintreeConfiguration();
 				$clientToken = Braintree_ClientToken::generate();
 			}
 			

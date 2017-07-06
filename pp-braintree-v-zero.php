@@ -75,10 +75,10 @@ class WPEC_PP_Braintree_V_Zero {
 	public function register_gateway( $gateways ) {
 		$num = max( array_keys( $gateways ) ) + 1;
 		$gateways[ $num ] = array(
-			'name'                   => __( 'Braintree - PayPal', 'wp-e-commerce' ),
+			'name'                   => __( 'PayPal powered by Braintree - PayPal', 'wp-e-commerce' ),
 			'api_version'            => 2.0,
 			'has_recurring_billing'  => true,
-			'display_name'           => __( 'PayPal Powered by Braintree', 'wp-e-commerce' ),
+			'display_name'           => __( 'PayPal', 'wp-e-commerce' ),
 			'image'                  => WPSC_URL . '/images/cc.gif',
 			'wp_admin_cannot_cancel' => false,
 			'requirements' => array(
@@ -96,10 +96,10 @@ class WPEC_PP_Braintree_V_Zero {
 
 		$num = max( array_keys( $gateways ) ) + 1;
 		$gateways[ $num ] = array(
-			'name'                   => __( 'Braintree - Credit/Debit Cards', 'wp-e-commerce' ),
+			'name'                   => __( 'PayPal powered by Braintree - Cards', 'wp-e-commerce' ),
 			'api_version'            => 2.0,
 			'has_recurring_billing'  => true,
-			'display_name'           => __( 'Credit Card (secured by PayPal)', 'wp-e-commerce' ),
+			'display_name'           => __( 'Credit Card', 'wp-e-commerce' ),
 			'image'                  => WPSC_URL . '/images/cc.gif',
 			'wp_admin_cannot_cancel' => false,
 			'requirements' => array(
@@ -167,9 +167,8 @@ class WPEC_PP_Braintree_V_Zero {
 	 * @since 1.0.0
 	 */
 	public function handle_auth_connect() {
-
 		// TO DO some sort of validation that we are on the correct page ? settings/gateways
-		if ( isset( $_REQUEST['wpec_paypal_braintree_admin_nonce'] ) && isset( $_REQUEST['access_token'] ) && ( isset( $_REQUEST['payment_gateway_id'] ) && $_REQUEST['payment_gateway_id'] == 'wpsc_merchant_braintree_v_zero' ) ) {
+		if ( isset( $_REQUEST['wpec_paypal_braintree_admin_nonce'] ) && isset( $_REQUEST['access_token'] ) ) {
 
 			$nonce = isset( $_REQUEST[ 'wpec_paypal_braintree_admin_nonce' ] ) ? trim( $_REQUEST[ 'wpec_paypal_braintree_admin_nonce' ] ) : false;
 			// if no nonce is present, then this probably wasn't a connection response
