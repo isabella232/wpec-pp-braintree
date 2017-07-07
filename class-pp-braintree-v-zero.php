@@ -570,7 +570,9 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 				</style>';
 			}
 			?>
+			<!-- Load the required client component -->
 			<script src="https://js.braintreegateway.com/web/3.16.0/js/client.min.js"></script>
+			<!-- Load additional components -->
 			<script src="https://js.braintreegateway.com/web/3.16.0/js/hosted-fields.min.js"></script>
 			<script src="https://js.braintreegateway.com/web/3.16.0/js/paypal-checkout.min.js"></script>
 			<script src="https://www.paypalobjects.com/api/checkout.js" data-version-4></script>
