@@ -49,7 +49,9 @@ class wpsc_merchant_braintree_v_zero_cc extends wpsc_merchant_braintree_v_zero {
 		// Check 3DS transaction.
 		$threedcheck = true;
 		$braintree_threedee_secure = get_option( 'braintree_threedee_secure' );
+		$force3ds = false;
 		if ( 'on' == $braintree_threedee_secure ) {
+			$force3ds = true;
 			$threedcheck = $this->check_3ds_risk_transaction( $payment_method_nonce );
 		}
 
@@ -111,7 +113,10 @@ class wpsc_merchant_braintree_v_zero_cc extends wpsc_merchant_braintree_v_zero {
 					"countryCodeAlpha2" => $shipping_address['country']
 				],				
 				"options" => [
-				  "submitForSettlement" => $submit_for_settlement,
+					"submitForSettlement" => $submit_for_settlement,
+					"threeDSecure" => [
+						"required" => $force3ds,
+					]
 				]
 			]);
 			
@@ -167,6 +172,9 @@ class wpsc_merchant_braintree_v_zero_cc extends wpsc_merchant_braintree_v_zero {
 			],
 			"options" => [
 				"submitForSettlement" => $submit_for_settlement,
+				"threeDSecure" => [
+					"required" => $force3ds
+				]
 			]
 		));
 

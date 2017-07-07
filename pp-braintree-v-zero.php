@@ -79,7 +79,7 @@ class WPEC_PP_Braintree_V_Zero {
 			'api_version'            => 2.0,
 			'has_recurring_billing'  => true,
 			'display_name'           => __( 'PayPal', 'wp-e-commerce' ),
-			'image'                  => WPEC_PPBRAINTREE_VZERO_PLUGIN_URL . 'assets/images/PP_logo_h_200x51.png',
+			'image'                  => 'https://www.paypalobjects.com/webstatic/en_US/i/buttons/PP_logo_h_200x51.png',
 			'wp_admin_cannot_cancel' => false,
 			'requirements' => array(
 				//'php_version' => 5.0
@@ -155,6 +155,7 @@ class WPEC_PP_Braintree_V_Zero {
 		$output = '';
 
 		if ( (bool) get_option( 'bt_vzero_pp_payments' ) == true ) {
+			$output .= '<tr><td>' . __( 'Click below to continue to PayPal', 'wp-e-commerce' ) .'</td></tr>';
 			$output .= '<tr><td><div id="pp_braintree_pp_button"></div></td></tr>';
 		}
 
