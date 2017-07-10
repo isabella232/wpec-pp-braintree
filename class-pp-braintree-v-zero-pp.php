@@ -58,6 +58,7 @@ class wpsc_merchant_braintree_v_zero_pp extends wpsc_merchant_braintree_v_zero {
 			$result = $gateway->transaction()->sale([
 				"amount" => $paymentAmount,
 				"paymentMethodNonce" => $payment_method_nonce,
+				"channel" => 'WPec_Cart_PPpbBT',
 				"orderId" => $session_id,
 				"customer" => [
 					"firstName" => $billing_address['first_name'],
