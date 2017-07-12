@@ -12,6 +12,26 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 		parent::__construct( $purchase_id, $is_receiving );
 	}
 
+	public static function show_connect_button() {
+		$output = '';
+		if ( self::bt_auth_can_connect() ) {
+			$connect_url = ! self::bt_auth_is_connected() ? self::wpec_bt_auth_get_connect_url() : self::wpec_bt_auth_get_disconnect_url();
+			$button_image_url = WPEC_PPBRAINTREE_VZERO_PLUGIN_URL . '/braintree/images/connect-braintree.png';
+			$output .= '<tr class="wc-braintree-auth">
+							<td>Connect/Disconnect</td>';
+			if ( self::bt_auth_is_connected() ) {
+				$output .= "<td><a href='". esc_url( $connect_url ) . "' class='button-primary'>" . esc_html__( 'Disconnect from PayPal Powered by Braintree', 'wpec-paypal-braintree-vzero' ) . "</a>
+							<p class='small description'>" . __( 'Merchant account: ', 'wp-e-commerce' ) . esc_attr( get_option( 'wpec_braintree_auth_merchant_id' ) ) ."</p></td>";
+			} else {
+				$output .= '<td><a href="' . esc_url( $connect_url ) . '" class="wpec-braintree-connect-button"><img src="' . esc_url( $button_image_url ) . '"/></a></td>
+							<td></td>';
+			}
+			$output .= '</tr>';
+		}
+
+		return $output;
+	}
+
 	/**
 	 * Gets the Braintree Auth disconnect URL.
 	 *

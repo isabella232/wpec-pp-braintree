@@ -58,7 +58,7 @@ class wpsc_merchant_braintree_v_zero_pp extends wpsc_merchant_braintree_v_zero {
 			$result = $gateway->transaction()->sale([
 				"amount" => $paymentAmount,
 				"paymentMethodNonce" => $payment_method_nonce,
-				"channel" => 'WPec_Cart_PPpbBT',
+				"channel" => "WPec_Cart_PPpbBT",
 				"orderId" => $session_id,
 				"customer" => [
 					"firstName" => $billing_address['first_name'],
@@ -172,20 +172,8 @@ class wpsc_merchant_braintree_v_zero_pp extends wpsc_merchant_braintree_v_zero {
 	 * @return string
 	 */
 	public static function form_braintree_v_zero_pp() {
-		$output = '';
-		if ( self::bt_auth_can_connect() ) {
-			$connect_url = ! self::bt_auth_is_connected() ? self::wpec_bt_auth_get_connect_url() : self::wpec_bt_auth_get_disconnect_url();
-			$button_image_url = WPEC_PPBRAINTREE_VZERO_PLUGIN_URL . '/braintree/images/connect-braintree.png';
-			$output .= '<tr class="wc-braintree-auth">
-							<td>Connect/Disconnect</td>';
-			if ( self::bt_auth_is_connected() ) {
-				$output .= "<td><a href='". esc_url( $connect_url ) . "' class='button-primary'>" . esc_html__( 'Disconnect from PayPal Powered by Braintree', 'wpec-paypal-braintree-vzero' ) . "</a></td>";
-			} else {
-				$output .= '<td><a href="' . esc_url( $connect_url ) . '" class="wpec-braintree-connect-button"><img src="' . esc_url( $button_image_url ) . '"/></a></td>
-							<td></td>';
-			}
-			$output .= '</tr>';
-		}
+		$output = self::show_connect_button();
+
 		$output .= '<tr>
 						<td colspan="2">
 							<h4>PayPal Payments</h4>
