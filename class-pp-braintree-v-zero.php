@@ -23,8 +23,9 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 				$output .= "<td><a href='". esc_url( $connect_url ) . "' class='button-primary'>" . esc_html__( 'Disconnect from PayPal Powered by Braintree', 'wpec-paypal-braintree-vzero' ) . "</a>
 							<p class='small description'>" . __( 'Merchant account: ', 'wp-e-commerce' ) . esc_attr( get_option( 'wpec_braintree_auth_merchant_id' ) ) ."</p></td>";
 			} else {
-				$output .= '<td><a href="' . esc_url( $connect_url ) . '" class="wpec-braintree-connect-button"><img src="' . esc_url( $button_image_url ) . '"/></a></td>
-							<td></td>';
+				$output .= "<td><a href='" . esc_url( $connect_url ) . "' class='wpec-braintree-connect-button'><img src='" . esc_url( $button_image_url ) . "'/></a>
+							<p class='small description'><a href='". esc_url( 'https://www.braintreepayments.com/partners/learn-more' ) ."' target='_blank'>" . __( 'Learn More ', 'wp-e-commerce' ) ."</a></p></td>
+							<td></td>";
 			}
 			$output .= '</tr>';
 		}
