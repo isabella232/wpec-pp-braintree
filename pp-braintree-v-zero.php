@@ -99,7 +99,7 @@ class WPEC_PP_Braintree_V_Zero {
 			'name'                   => __( 'PayPal powered by Braintree - Cards', 'wp-e-commerce' ),
 			'api_version'            => 2.0,
 			'has_recurring_billing'  => true,
-			'display_name'           => __( 'Credit/Debit Card', 'wp-e-commerce' ),
+			'display_name'           => __( 'Credit/Debit Cards', 'wp-e-commerce' ),
 			'image'                  => WPSC_URL . '/images/cc.gif',
 			'wp_admin_cannot_cancel' => false,
 			'requirements' => array(
@@ -125,7 +125,7 @@ class WPEC_PP_Braintree_V_Zero {
 	public function pp_braintree_cc_checkout_fields() {
 		$output = '';
 
-		if ( (bool) get_option( 'bt_vzero_cc_payments' ) == true ) {
+		if ( wpsc_merchant_braintree_v_zero::is_gateway_active( 'wpsc_merchant_braintree_v_zero_cc' ) ) {
 			$output .= '<tr><td><label class="hosted-fields--label" for="card-number">Card Number</label>
 							<div id="bt-cc-card-number" class="hosted-field"></div>
 						</td></tr>
@@ -154,7 +154,7 @@ class WPEC_PP_Braintree_V_Zero {
 	public function pp_braintree_pp_checkout_fields() {
 		$output = '';
 
-		if ( (bool) get_option( 'bt_vzero_pp_payments' ) == true ) {
+		if ( wpsc_merchant_braintree_v_zero::is_gateway_active( 'wpsc_merchant_braintree_v_zero_pp' ) ) {
 			$output .= '<tr><td>' . __( 'Click below to continue to PayPal', 'wp-e-commerce' ) .'</td></tr>';
 			$output .= '<tr><td><div id="pp_braintree_pp_button"></div></td></tr>';
 		}

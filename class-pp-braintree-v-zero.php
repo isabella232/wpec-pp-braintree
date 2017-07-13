@@ -33,6 +33,12 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 		return $output;
 	}
 
+	public static function is_gateway_active( $gateway ) {
+		$selected_gateways = get_option( 'custom_gateway_options', array() );
+		
+		return in_array( $gateway, $selected_gateways );
+	}
+
 	/**
 	 * Gets the Braintree Auth disconnect URL.
 	 *
@@ -524,6 +530,11 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 
 	public static function pp_braintree_enqueue_js() {
 		global $merchant_currency, $braintree_settings;
+			
+			if ( ! self::is_gateway_active( 'wpsc_merchant_braintree_v_zero_pp' ) && ! self::is_gateway_active( 'wpsc_merchant_braintree_v_zero_cc' ) ) {
+				return;
+			}
+
 			$braintree_threedee_secure = get_option( 'braintree_threedee_secure' );
 			$braintree_threedee_secure_only = get_option( 'braintree_threedee_secure_only' );
 			// Check if we are using Auth and connected
@@ -601,6 +612,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 
 			<script type='text/javascript'>
 			var clientToken = "<?php echo $clientToken; ?>";
+			var errmsg = '';
 			var components = {
 			  client: null,
 			  threeDSecure: null,
@@ -686,8 +698,49 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 						event.preventDefault();
 						components.hostedFields.tokenize(function (tokenizeErr, payload) {
 							if (tokenizeErr) {
-								console.error(tokenizeErr.message);
-								alert(tokenizeErr.message);
+								switch (tokenizeErr.code) {
+								  case 'HOSTED_FIELDS_FIELDS_EMPTY':
+									// occurs when none of the fields are filled in
+									errmsg = 'Please enter credit card details!';
+
+									break;
+								  case 'HOSTED_FIELDS_FIELDS_INVALID':
+									// occurs when certain fields do not pass client side validation
+									errmsg = 'Some credit card fields are invalid:' + tokenizeErr.details.invalidFieldKeys;
+									break;
+								  case 'HOSTED_FIELDS_TOKENIZATION_FAIL_ON_DUPLICATE':
+									// occurs when:
+									//   * the client token used for client authorization was generated
+									//     with a customer ID and the fail on duplicate payment method
+									//     option is set to true
+									//   * the card being tokenized has previously been vaulted (with any customer)
+									// See: https://developers.braintreepayments.com/reference/request/client-token/generate/#options.fail_on_duplicate_payment_method
+									errmsg = 'This payment method already exists in your vault.';
+									break;
+								  case 'HOSTED_FIELDS_TOKENIZATION_CVV_VERIFICATION_FAILED':
+									// occurs when:
+									//   * the client token used for client authorization was generated
+									//     with a customer ID and the verify card option is set to true
+									//     and you have credit card verification turned on in the Braintree
+									//     control panel
+									//   * the cvv does not pass verfication (https://developers.braintreepayments.com/reference/general/testing/#avs-and-cvv/cid-responses)
+									// See: https://developers.braintreepayments.com/reference/request/client-token/generate/#options.verify_card
+									errmsg = 'CVV did not pass verification';
+									break;
+								  case 'HOSTED_FIELDS_FAILED_TOKENIZATION':
+									// occurs for any other tokenization error on the server
+									errmsg = 'Tokenization failed server side. Is the card valid?';
+									break;
+								  case 'HOSTED_FIELDS_TOKENIZATION_NETWORK_ERROR':
+									// occurs when the Braintree gateway cannot be contacted
+									errmsg = 'Network error occurred when tokenizing.';
+									break;
+								  default:
+									errmsg = 'Something bad happened!' + tokenizeErr;
+								}
+
+								console.error(errmsg);
+								alert(errmsg);
 								return;
 							}
 							if ( components.threeDSecure ) {
@@ -900,11 +953,11 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 				  }
 				  components.client = clientInstance;
 				  <?php
-				  if ( (bool) get_option( 'bt_vzero_cc_payments' ) == true ) { ?>
+				  if ( self::is_gateway_active( 'wpsc_merchant_braintree_v_zero_cc' ) ) { ?>
 					  create3DSecure( clientInstance );
 					  createHostedFields(clientInstance);
 				  <?php }
-				  if ( (bool) get_option( 'bt_vzero_pp_payments' ) == true ) { ?>
+				  if ( self::is_gateway_active( 'wpsc_merchant_braintree_v_zero_pp' ) ) { ?>
 					createPayPalCheckout(clientInstance );
 				  <?php } ?>
 				});

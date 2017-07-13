@@ -181,15 +181,6 @@ class wpsc_merchant_braintree_v_zero_pp extends wpsc_merchant_braintree_v_zero {
 					</tr>
 					<tr>
 						<td>
-							<label>Enable PayPal</label>
-						</td>
-						<td>
-							<label><input ' . checked( get_option( 'bt_vzero_pp_payments' ), true, false ) . ' type="radio" name="wpsc_options[bt_vzero_pp_payments]" value="1" /> Yes</label>&nbsp;&nbsp;&nbsp;
-							<label><input ' . checked( (bool) get_option( 'bt_vzero_pp_payments' ), false, false ) . ' type="radio" name="wpsc_options[bt_vzero_pp_payments]" value="0" /> No</label>
-						</td>
-					</tr>
-					<tr>
-						<td>
 							Sandbox Mode
 						</td>
 						<td>
