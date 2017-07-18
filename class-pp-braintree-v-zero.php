@@ -833,7 +833,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 							recipientName: jQuery( 'input[title="billingfirstname"]' ).val() + jQuery( 'input[title="billinglastname"]' ).val(),
 							line1: jQuery( 'textarea[title="billingaddress"]' ).text(),
 							city: jQuery( 'input[title="billingcity"]' ).val(),
-							countryCode: jQuery( 'select[data-wpsc-meta-key="billingcountry"]' ).val()
+							countryCode: jQuery( 'select[data-wpsc-meta-key="billingcountry"]' ).val(),
 							postalCode: jQuery( 'input[title="billingpostcode"]' ).val(),
 							state: replace_state_code( jQuery( 'input[title="billingstate"]' ).val() ),
 						  }
