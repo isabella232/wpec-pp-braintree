@@ -824,7 +824,6 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 						  currency: '<?php echo wpsc_get_currency_code(); ?>', // Required
 						  locale: 'en_US',
 						  useraction: 'commit',
-						  enableShippingAddress: false,
 						  <?php
 						  if ( wpsc_uses_shipping() ) {
 						  ?>
@@ -834,10 +833,14 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 							recipientName: jQuery( 'input[title="billingfirstname"]' ).val() + jQuery( 'input[title="billinglastname"]' ).val(),
 							line1: jQuery( 'textarea[title="billingaddress"]' ).text(),
 							city: jQuery( 'input[title="billingcity"]' ).val(),
-							countryCode: 'US',
+							countryCode: jQuery( 'select[data-wpsc-meta-key="billingcountry"]' ).val()
 							postalCode: jQuery( 'input[title="billingpostcode"]' ).val(),
 							state: replace_state_code( jQuery( 'input[title="billingstate"]' ).val() ),
 						  }
+						  <?php
+						  } else {
+						  ?>
+						  enableShippingAddress: false,
 						  <?php
 						  }
 						  ?>
