@@ -271,7 +271,7 @@ class wpsc_merchant_braintree_v_zero_cc extends wpsc_merchant_braintree_v_zero {
 	public static function form_braintree_v_zero_cc() {
 		$output = self::show_connect_button();
 
-		$output .= '<tr>
+		$output .= '<div id="cc_manual_connection_api"><tr>
 						<td colspan="2">
 							<h4>Credit Card Payments</h4>
 						</td>
@@ -374,7 +374,7 @@ class wpsc_merchant_braintree_v_zero_cc extends wpsc_merchant_braintree_v_zero {
 							<span id="braintree_production_merchant_id_errors" style="color: red"></span>
 							<span id="braintree_merchant_currency_errors" style="color: red"></span>
 						</td>
-					</tr>
+					</tr></div>
 					<tr>
 						<td>
 							Settlement Type

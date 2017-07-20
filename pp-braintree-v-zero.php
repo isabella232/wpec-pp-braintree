@@ -56,6 +56,7 @@ class WPEC_PP_Braintree_V_Zero {
 
 	public static function add_actions() {
 		add_action( 'wpsc_init', array( self::$instance, 'init' ), 2 );
+		add_action( 'admin_enqueue_scripts', array( self::$instance, 'admin_scripts' ) );
 		add_action( 'wpsc_bottom_of_shopping_cart' , array( 'wpsc_merchant_braintree_v_zero', 'pp_braintree_enqueue_js' ), 100 );
 	}
 
@@ -70,6 +71,14 @@ class WPEC_PP_Braintree_V_Zero {
 		include_once WPEC_PPBRAINTREE_VZERO_PLUGIN_DIR . '/class-pp-braintree-v-zero.php';
 		include_once WPEC_PPBRAINTREE_VZERO_PLUGIN_DIR . '/class-pp-braintree-v-zero-pp.php';
 		include_once WPEC_PPBRAINTREE_VZERO_PLUGIN_DIR . '/class-pp-braintree-v-zero-cc.php';
+	}
+
+	public function admin_scripts( $hook ) {
+		if ( 'settings_page_wpsc-settings' !== $hook ) {
+			return;
+		}
+
+		wp_enqueue_script( 'bt-script', WPEC_PPBRAINTREE_VZERO_PLUGIN_URL . 'assets/js/admin.js', array( 'jquery' ), WPSC_VERSION, true );
 	}
 
 	public function register_gateway( $gateways ) {
