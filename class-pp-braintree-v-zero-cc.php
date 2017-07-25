@@ -18,6 +18,7 @@ class wpsc_merchant_braintree_v_zero_cc extends wpsc_merchant_braintree_v_zero {
 		$paymentAmount = $this->cart_data['total_price'];
 
 		$session_id = $this->cart_data['session_id'];
+		$purchase_log = new WPSC_Purchase_Log( $session_id, 'sessionid' );
 		$email_address = $this->cart_data['email_address'];
 		$billing_address = $this->cart_data['billing_address'];
 
@@ -58,7 +59,7 @@ class wpsc_merchant_braintree_v_zero_cc extends wpsc_merchant_braintree_v_zero {
 
 		if ( ! $threedcheck ) {
 			// 3DS check failed so return;
-			$purchase_log = new WPSC_Purchase_Log( $session_id, 'sessionid' );
+			
 			$purchase_log->set( array(
 				'processed' => WPSC_Purchase_Log::INCOMPLETE_SALE,
 				'notes' => '3D Secure verification failed!',
@@ -89,7 +90,7 @@ class wpsc_merchant_braintree_v_zero_cc extends wpsc_merchant_braintree_v_zero {
 				"amount" => $paymentAmount,
 				"paymentMethodNonce" => $payment_method_nonce,
 				"channel" => "WPec_Cart_PPpbBT",
-				"orderId" => $session_id,
+				"orderId" => $purchase_log->get('id'),
 				"customer" => [
 					"firstName" => $billing_address['first_name'],
 					"lastName" => $billing_address['last_name'],
