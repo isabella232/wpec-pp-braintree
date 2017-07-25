@@ -119,7 +119,7 @@ class wpsc_merchant_braintree_v_zero_cc extends wpsc_merchant_braintree_v_zero {
 					"threeDSecure" => [
 						"required" => $force3ds,
 					]
-				]
+				],
 				"deviceData" => $kount_fraud,
 			]);
 			
