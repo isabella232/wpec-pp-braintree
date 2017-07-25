@@ -556,51 +556,49 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 			$pp_but_colour = get_option( 'bt_vzero_pp_payments_but_colour' ) != false ? get_option( 'bt_vzero_pp_payments_but_colour' ) : 'gold' ;
 			$pp_but_size = get_option( 'bt_vzero_pp_payments_but_size' ) != false ? get_option( 'bt_vzero_pp_payments_but_size' ) : 'responsive' ;
 			$pp_but_shape = get_option( 'bt_vzero_pp_payments_but_shape' ) != false ? get_option( 'bt_vzero_pp_payments_but_shape' ) : 'pill' ;
-			if ( $braintree_threedee_secure == 'on' ) {
-				echo '
-				<style>
-				#pp-btree-hosted-fields-modal {
-				  position: absolute;
-				  top: 0;
-				  left: 0;
-				  display: flex;
-				  align-items: center;
-				  height: 100vh;
-				  z-index: 100;
-				}
-				.pp-btree-hosted-fields-modal-hidden {
-					display: none !important;
-				}
-				.pp-btree-hosted-fields-bt-modal-frame {
-				  height: 480px;
-				  width: 440px;
-				  margin: auto;
-				  background-color: #eee;
-				  z-index: 2;
-				  border-radius: 6px;
-				}
-				.pp-btree-hosted-fields-bt-modal-body {
-				  height: 400px;
-				  margin: 0 20px;
-				  background-color: white;
-				  border: 1px solid lightgray;
-				}
-				.pp-btree-hosted-fields-bt-modal-header, .pp-btree-hosted-fields-bt-modal-footer {
-				  height: 40px;
-				  text-align: center;
-				  line-height: 40px;
-				}
-				.pp-btree-hosted-fields-bt-mask {
-				  position: fixed;
-				  top: 0;
-				  left: 0;
-				  height: 100%;
-				  width: 100%;
-				  background-color: black;
-				  opacity: 0.8;
-				}
-				</style>';
+			echo '
+			<style>
+			#pp-btree-hosted-fields-modal {
+			  position: absolute;
+			  top: 0;
+			  left: 0;
+			  display: flex;
+			  align-items: center;
+			  height: 100vh;
+			  z-index: 100;
 			}
+			.pp-btree-hosted-fields-modal-hidden {
+				display: none !important;
+			}
+			.pp-btree-hosted-fields-bt-modal-frame {
+			  height: 480px;
+			  width: 440px;
+			  margin: auto;
+			  background-color: #eee;
+			  z-index: 2;
+			  border-radius: 6px;
+			}
+			.pp-btree-hosted-fields-bt-modal-body {
+			  height: 400px;
+			  margin: 0 20px;
+			  background-color: white;
+			  border: 1px solid lightgray;
+			}
+			.pp-btree-hosted-fields-bt-modal-header, .pp-btree-hosted-fields-bt-modal-footer {
+			  height: 40px;
+			  text-align: center;
+			  line-height: 40px;
+			}
+			.pp-btree-hosted-fields-bt-mask {
+			  position: fixed;
+			  top: 0;
+			  left: 0;
+			  height: 100%;
+			  width: 100%;
+			  background-color: black;
+			  opacity: 0.8;
+			}
+			</style>';
 			?>
 			<!-- Load the required client component -->
 			<script src="https://js.braintreegateway.com/web/3.16.0/js/client.min.js"></script>
@@ -609,7 +607,8 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 			<script src="https://js.braintreegateway.com/web/3.16.0/js/paypal-checkout.min.js"></script>
 			<script src="https://www.paypalobjects.com/api/checkout.js" data-version-4></script>
 			<script src="https://js.braintreegateway.com/web/3.16.0/js/three-d-secure.min.js"></script>
-
+			<!-- Load fraud tools -->
+			<script src="https://js.braintreegateway.com/web/3.20.0/js/data-collector.min.js"></script>
 			<script type='text/javascript'>
 			var clientToken = "<?php echo $clientToken; ?>";
 			var errmsg = '';
@@ -618,6 +617,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 			  threeDSecure: null,
 			  hostedFields: null,
 			  paypalCheckout: null,
+			  kount: null,
 			};
 			var my3DSContainer;
 			var modal = document.getElementById('pp-btree-hosted-fields-modal');
@@ -955,6 +955,24 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 					return;
 				  }
 				  components.client = clientInstance;
+
+				  braintree.dataCollector.create({
+					client: clientInstance,
+					kount: true
+				  }, function (err, dataCollectorInstance) {
+					if (err) {
+					  console.log(err);
+					  // Handle error in creation of data collector
+					  return;
+					}
+					// At this point, you should access the dataCollectorInstance.deviceData value and provide it
+					// to your server, e.g. by injecting it into your form as a hidden input.
+					components.kount = dataCollectorInstance.deviceData;
+					
+					document.getElementById('pp_btree_card_kount').value = components.kount;
+				  });
+				  
+				  
 				  <?php
 				  if ( self::is_gateway_active( 'wpsc_merchant_braintree_v_zero_cc' ) ) { ?>
 					  create3DSecure( clientInstance );

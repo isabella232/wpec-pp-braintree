@@ -129,6 +129,7 @@ class WPEC_PP_Braintree_V_Zero {
 
 	public function te_v1_insert_hidden_field() {
 		echo '<input type="hidden" id="pp_btree_method_nonce" name="pp_btree_method_nonce" value="" />';
+		echo '<input type="hidden" id="pp_btree_card_kount" name="pp_btree_card_kount" value="" />';
 	}
 
 	public function pp_braintree_cc_checkout_fields() {

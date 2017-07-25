@@ -38,6 +38,7 @@ class wpsc_merchant_braintree_v_zero_cc extends wpsc_merchant_braintree_v_zero {
 		}
 
 		$payment_method_nonce = $_POST['pp_btree_method_nonce'];
+		$kount_fraud = isset( $_POST['pp_btree_card_kount'] ) ? strip_tags( trim ( $_POST['pp_btree_card_kount'] ) ) : '';
 
 		//echo "DEBUG :: "."payment_method_nonce = ".$payment_method_nonce."<br />";
 		if ( $braintree_settings['settlement_type'] == 'upfront' ) {
@@ -119,6 +120,7 @@ class wpsc_merchant_braintree_v_zero_cc extends wpsc_merchant_braintree_v_zero {
 						"required" => $force3ds,
 					]
 				]
+				"deviceData" => $kount_fraud,
 			]);
 			
 			// In theory all error handling should be done on the client side...?
