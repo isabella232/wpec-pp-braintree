@@ -529,34 +529,61 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 	}
 
 	public static function pp_braintree_enqueue_js() {
-		global $merchant_currency, $braintree_settings;
-			
-			if ( ! self::is_gateway_active( 'wpsc_merchant_braintree_v_zero_pp' ) && ! self::is_gateway_active( 'wpsc_merchant_braintree_v_zero_cc' ) ) {
-				return;
-			}
+		if ( ! self::is_gateway_active( 'wpsc_merchant_braintree_v_zero_pp' ) && ! self::is_gateway_active( 'wpsc_merchant_braintree_v_zero_cc' ) ) {
+			return;
+		}
 
-			$braintree_threedee_secure = get_option( 'braintree_threedee_secure' );
-			$braintree_threedee_secure_only = get_option( 'braintree_threedee_secure_only' );
-			// Check if we are using Auth and connected
-			if ( self::bt_auth_can_connect() && self::bt_auth_is_connected() ) {
-				$acc_token = get_option( 'wpec_braintree_auth_access_token' );
-				$gateway = new Braintree_Gateway( array(
-					'accessToken' => $acc_token
-				));
-				$clientToken = $gateway->clientToken()->generate();
-			} else {
-				self::setBraintreeConfiguration();
-				$clientToken = Braintree_ClientToken::generate();
-			}
-			
-			$pp_sandbox = get_option( 'braintree_pp_sandbox_mode', 'on' );
-			$sandbox = $pp_sandbox == 'on' ? true : false ;
-			// Set PP Button styles
-			$pp_but_label = get_option( 'bt_vzero_pp_payments_but_label' ) != false ? get_option( 'bt_vzero_pp_payments_but_label' ) : 'pay' ;
-			$pp_but_colour = get_option( 'bt_vzero_pp_payments_but_colour' ) != false ? get_option( 'bt_vzero_pp_payments_but_colour' ) : 'gold' ;
-			$pp_but_size = get_option( 'bt_vzero_pp_payments_but_size' ) != false ? get_option( 'bt_vzero_pp_payments_but_size' ) : 'responsive' ;
-			$pp_but_shape = get_option( 'bt_vzero_pp_payments_but_shape' ) != false ? get_option( 'bt_vzero_pp_payments_but_shape' ) : 'pill' ;
-			echo '
+		// Check if we are using Auth and connected
+		if ( self::bt_auth_can_connect() && self::bt_auth_is_connected() ) {
+			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
+			$gateway = new Braintree_Gateway( array(
+				'accessToken' => $acc_token
+			));
+			$clientToken = $gateway->clientToken()->generate();
+		} else {
+			self::setBraintreeConfiguration();
+			$clientToken = Braintree_ClientToken::generate();
+		}
+		$pp_sandbox = get_option( 'braintree_pp_sandbox_mode', 'on' );
+		$sandbox = $pp_sandbox == 'on' ? 'sandbox' : 'production' ;	
+		// Set PP Button styles
+		$pp_but_label = get_option( 'bt_vzero_pp_payments_but_label' ) != false ? get_option( 'bt_vzero_pp_payments_but_label' ) : 'pay' ;
+		$pp_but_colour = get_option( 'bt_vzero_pp_payments_but_colour' ) != false ? get_option( 'bt_vzero_pp_payments_but_colour' ) : 'gold' ;
+		$pp_but_size = get_option( 'bt_vzero_pp_payments_but_size' ) != false ? get_option( 'bt_vzero_pp_payments_but_size' ) : 'responsive' ;
+		$pp_but_shape = get_option( 'bt_vzero_pp_payments_but_shape' ) != false ? get_option( 'bt_vzero_pp_payments_but_shape' ) : 'pill' ;		
+
+		wp_register_script( 'pp-braintree', WPEC_PPBRAINTREE_VZERO_PLUGIN_URL . 'assets/js/frontend.js', array( 'jquery' ), null, true );
+		wp_localize_script( 'pp-braintree', 'wpec_ppbt', array(
+			't3ds' => esc_attr( get_option( 'braintree_threedee_secure' ) ),
+			't3dsonly' => esc_attr( get_option( 'braintree_threedee_secure_only' ) ),
+			'ctoken' => $clientToken,
+			'sandbox' => $sandbox,
+			'but_label' => $pp_but_label,
+			'but_colour' => $pp_but_colour,
+			'but_size' => $pp_but_size,
+			'but_shape' => $pp_but_shape,
+			'cart_total' => wpsc_cart_total(false),
+			'currency' => wpsc_get_currency_code(),
+			'is_shipping' => wpsc_uses_shipping(),
+			'is_cc_active' => self::is_gateway_active( 'wpsc_merchant_braintree_v_zero_cc' ),
+			'is_pp_active' => self::is_gateway_active( 'wpsc_merchant_braintree_v_zero_pp' ),
+			)
+		);
+		wp_enqueue_script( 'pp-braintree' );
+		wp_enqueue_script( 'ppbtclient', 'https://js.braintreegateway.com/web/3.20.0/js/client.min.js', array(), null, true );
+		wp_enqueue_script( 'ppbthosted', 'https://js.braintreegateway.com/web/3.20.0/js/hosted-fields.min.js', array(), null, true );
+		wp_enqueue_script( 'ppbtppcheckout', 'https://js.braintreegateway.com/web/3.20.0/js/paypal-checkout.min.js', array(), null, true );
+		wp_enqueue_script( 'ppbtppapi', 'https://www.paypalobjects.com/api/checkout.js', array(), null, true );
+		wp_enqueue_script( 'ppbtthreeds', 'https://js.braintreegateway.com/web/3.20.0/js/three-d-secure.min.js', array(), null, true );
+		wp_enqueue_script( 'ppbtdata', 'https://js.braintreegateway.com/web/3.20.0/js/data-collector.min.js', array(), null, true );
+	}
+	
+	public function pp_braintree_add_css() {
+		if ( ! self::is_gateway_active( 'wpsc_merchant_braintree_v_zero_pp' ) && ! self::is_gateway_active( 'wpsc_merchant_braintree_v_zero_cc' ) ) {
+			return;
+		}
+
+		?>
 			<style>
 			#pp-btree-hosted-fields-modal {
 			  position: absolute;
@@ -598,401 +625,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 			  background-color: black;
 			  opacity: 0.8;
 			}
-			</style>';
-			?>
-			<!-- Load the required client component -->
-			<script src="https://js.braintreegateway.com/web/3.16.0/js/client.min.js"></script>
-			<!-- Load additional components -->
-			<script src="https://js.braintreegateway.com/web/3.16.0/js/hosted-fields.min.js"></script>
-			<script src="https://js.braintreegateway.com/web/3.16.0/js/paypal-checkout.min.js"></script>
-			<script src="https://www.paypalobjects.com/api/checkout.js" data-version-4></script>
-			<script src="https://js.braintreegateway.com/web/3.16.0/js/three-d-secure.min.js"></script>
-			<!-- Load fraud tools -->
-			<script src="https://js.braintreegateway.com/web/3.20.0/js/data-collector.min.js"></script>
-			<script type='text/javascript'>
-			var clientToken = "<?php echo $clientToken; ?>";
-			var errmsg = '';
-			var components = {
-			  client: null,
-			  threeDSecure: null,
-			  hostedFields: null,
-			  paypalCheckout: null,
-			  kount: null,
-			};
-			var my3DSContainer;
-			var modal = document.getElementById('pp-btree-hosted-fields-modal');
-			var bankFrame = document.querySelector('.pp-btree-hosted-fields-bt-modal-body');
-			var closeFrame = document.getElementById('pp-btree-hosted-fields-text-close');
-			var form = document.querySelector('.wpsc_checkout_forms');
-			var submit = document.querySelector('.make_purchase.wpsc_buy_button');
-			var paypalButton = document.querySelector('#pp_braintree_pp_button');
-			
-			function create3DSecure( clientInstance ) {
-				// DO 3DS
-				<?php if ( $braintree_threedee_secure == 'on' ) { ?>
-					braintree.threeDSecure.create({
-						client:  clientInstance
-					}, function (threeDSecureErr, threeDSecureInstance) {
-						if (threeDSecureErr) {
-						  // Handle error in 3D Secure component creation
-						  console.error('error in 3D Secure component creation');
-						  return;
-						}
-						components.threeDSecure = threeDSecureInstance;
-					});
-				<?php } ?>
-			}
-			function addFrame(err, iframe) {
-				// Set up your UI and add the iframe.
-				bankFrame.appendChild(iframe);
-				modal.classList.remove('pp-btree-hosted-fields-modal-hidden');
-				modal.focus();
-			}
-			function removeFrame() {
-				var iframe = bankFrame.querySelector('iframe');
-				modal.classList.add('pp-btree-hosted-fields-modal-hidden');
-				iframe.parentNode.removeChild(iframe);
-				submit.removeAttribute('disabled');
-			}
-			function createHostedFields( clientInstance ) {
-				braintree.hostedFields.create({
-					client: clientInstance,
-					styles: {
-					  'input': {
-						'font-size': '14px',
-						'font-family': 'monospace',
-						'font-weight': 'lighter',
-						'color': '#ccc'
-					  },
-					  ':focus': {
-						'color': 'black'
-					  },
-					  '.valid': {
-						'color': '#8bdda8'
-					  }
-					},
-					fields: {
-					  number: {
-						selector: '#bt-cc-card-number',
-						placeholder: '4111 1111 1111 1111'
-					  },
-					  cvv: {
-						selector: '#bt-cc-card-cvv',
-						placeholder: '123'
-					  },
-					  expirationDate: {
-						selector: '#bt-cc-card-exp',
-						placeholder: 'MM/YYYY'
-					  },
-					}
-				}, function (hostedFieldsErr, hostedFieldsInstance) {
-					if (hostedFieldsErr) {
-						console.error(hostedFieldsErr.code);
-						alert(hostedFieldsErr.code);
-						return;
-					}
-					components.hostedFields = hostedFieldsInstance;
-					submit.removeAttribute('disabled');
-					form.addEventListener('submit', function (event) {
-						if ( jQuery('input[name=custom_gateway]:checked').val() !== 'wpsc_merchant_braintree_v_zero_cc' ) { return; }
-						event.preventDefault();
-						components.hostedFields.tokenize(function (tokenizeErr, payload) {
-							if (tokenizeErr) {
-								switch (tokenizeErr.code) {
-								  case 'HOSTED_FIELDS_FIELDS_EMPTY':
-									// occurs when none of the fields are filled in
-									errmsg = 'Please enter credit card details!';
-
-									break;
-								  case 'HOSTED_FIELDS_FIELDS_INVALID':
-									// occurs when certain fields do not pass client side validation
-									errmsg = 'Some credit card fields are invalid:' + tokenizeErr.details.invalidFieldKeys;
-									break;
-								  case 'HOSTED_FIELDS_TOKENIZATION_FAIL_ON_DUPLICATE':
-									// occurs when:
-									//   * the client token used for client authorization was generated
-									//     with a customer ID and the fail on duplicate payment method
-									//     option is set to true
-									//   * the card being tokenized has previously been vaulted (with any customer)
-									// See: https://developers.braintreepayments.com/reference/request/client-token/generate/#options.fail_on_duplicate_payment_method
-									errmsg = 'This payment method already exists in your vault.';
-									break;
-								  case 'HOSTED_FIELDS_TOKENIZATION_CVV_VERIFICATION_FAILED':
-									// occurs when:
-									//   * the client token used for client authorization was generated
-									//     with a customer ID and the verify card option is set to true
-									//     and you have credit card verification turned on in the Braintree
-									//     control panel
-									//   * the cvv does not pass verfication (https://developers.braintreepayments.com/reference/general/testing/#avs-and-cvv/cid-responses)
-									// See: https://developers.braintreepayments.com/reference/request/client-token/generate/#options.verify_card
-									errmsg = 'CVV did not pass verification';
-									break;
-								  case 'HOSTED_FIELDS_FAILED_TOKENIZATION':
-									// occurs for any other tokenization error on the server
-									errmsg = 'Tokenization failed server side. Is the card valid?';
-									break;
-								  case 'HOSTED_FIELDS_TOKENIZATION_NETWORK_ERROR':
-									// occurs when the Braintree gateway cannot be contacted
-									errmsg = 'Network error occurred when tokenizing.';
-									break;
-								  default:
-									errmsg = 'Something bad happened!' + tokenizeErr;
-								}
-
-								console.error(errmsg);
-								alert(errmsg);
-								return;
-							}
-							if ( components.threeDSecure ) {
-								components.threeDSecure.verifyCard({
-									amount: <?php echo wpsc_cart_total(false); ?>,
-									nonce: payload.nonce,
-									addFrame: addFrame,
-									removeFrame: removeFrame
-									}, function (err, response) {
-										// Handle response
-										if (!err) {
-											var liabilityShifted = response.liabilityShifted; // true || false
-											var liabilityShiftPossible =  response.liabilityShiftPossible; // true || false
-											if (liabilityShifted) {
-												// The 3D Secure payment was successful so proceed with this nonce
-												document.getElementById('pp_btree_method_nonce').value = response.nonce;
-												jQuery(".wpsc_checkout_forms").submit();
-											} else {
-												// The 3D Secure payment failed an initial check so check whether liability shift is possible
-												if (liabilityShiftPossible) {
-													// LiabilityShift is possible so proceed with this nonce
-													document.getElementById('pp_btree_method_nonce').value = response.nonce;
-													jQuery(".wpsc_checkout_forms").submit();
-												} else {
-													<?php if ( $braintree_threedee_secure_only == 'on' ) { ?>
-														// Check whether the 3D Secure check has to be passed to proceeed. If so then show an error
-													  console.error('There was a problem with your payment verification');
-													  alert('There was a problem with your payment verification');
-													  return;
-													  <?php
-													} else { ?>
-														// ...and if not just proceed with this nonce
-														document.getElementById('pp_btree_method_nonce').value = response.nonce;
-														jQuery(".wpsc_checkout_forms").submit();
-													<?php } ?>
-												}
-											}
-											// 3D Secure finished. Using response.nonce you may proceed with the transaction with the associated server side parameters below.
-											document.getElementById('pp_btree_method_nonce').value = response.nonce;
-											jQuery(".wpsc_checkout_forms").submit();
-										} else {
-											// Handle errors
-											console.log('verification error:', err);
-											return;
-										}
-									});
-								} else {
-									// send the nonce to your server.
-									document.getElementById('pp_btree_method_nonce').value = payload.nonce;
-									jQuery(".wpsc_checkout_forms").submit();
-								}
-						});
-					}, false);
-				});
-			};
-			function createPayPalCheckout( clientInstance ) {
-				  braintree.paypalCheckout.create({
-					client: clientInstance
-				  }, function (paypalErr, paypalCheckoutInstance) {
-					if (paypalErr) {
-					  console.error('Error creating PayPal:', paypalErr);
-					  alert(paypalErr.code);
-					  return;
-					}
-					components.paypalCheckout = paypalCheckoutInstance;
-					paypalButton.removeAttribute('disabled');
-					// Set up PayPal with the checkout.js library
-					paypal.Button.render({
-						env: '<?php if ( $sandbox ) { echo 'sandbox'; } else { echo 'production'; } ?>',
-						style: {
-							label: '<?php echo $pp_but_label; ?>',
-							size:  '<?php echo $pp_but_size; ?>',
-							shape: '<?php echo $pp_but_shape; ?>',
-							color: '<?php echo $pp_but_colour; ?>'
-						},
-					  payment: function () {
-						return components.paypalCheckout.createPayment({
-						  flow: 'checkout', // Required
-						  intent: 'sale',
-						  amount: <?php echo wpsc_cart_total(false); ?>, // Required
-						  currency: '<?php echo wpsc_get_currency_code(); ?>', // Required
-						  locale: 'en_US',
-						  useraction: 'commit',
-						  <?php
-						  if ( wpsc_uses_shipping() ) {
-						  ?>
-						  enableShippingAddress: true,
-						  shippingAddressEditable: false,
-						  shippingAddressOverride: {
-							recipientName: jQuery( 'input[title="billingfirstname"]' ).val() + jQuery( 'input[title="billinglastname"]' ).val(),
-							line1: jQuery( 'textarea[title="billingaddress"]' ).text(),
-							city: jQuery( 'input[title="billingcity"]' ).val(),
-							countryCode: jQuery( 'select[data-wpsc-meta-key="billingcountry"]' ).val(),
-							postalCode: jQuery( 'input[title="billingpostcode"]' ).val(),
-							state: replace_state_code( jQuery( 'input[title="billingstate"]' ).val() ),
-						  }
-						  <?php
-						  } else {
-						  ?>
-						  enableShippingAddress: false,
-						  <?php
-						  }
-						  ?>
-						});
-					  },
-					  onAuthorize: function (data, actions) {
-						return components.paypalCheckout.tokenizePayment(data)
-						  .then(function (payload) {
-							// Submit `payload.nonce` to your server
-							paypalButton.setAttribute('disabled', true);
-							document.getElementById('pp_btree_method_nonce').value = payload.nonce;
-							jQuery(".wpsc_checkout_forms").submit();
-						  });
-					  },
-					  onCancel: function (data) {
-						console.log('checkout.js payment cancelled', JSON.stringify(data, 0, 2));
-					  },
-					  onError: function (err) {
-						console.error('checkout.js error', err);
-					  }
-					}, paypalButton).then(function () {
-					  // The PayPal button will be rendered in an html element with the id
-					  // `paypal-button`. This function will be called when the PayPal button
-					  // is set up and ready to be used.
-					});
-				  });
-			};
-
-			function replace_state_code( state ) {
-					var states = {
-						'Alabama':'AL',
-						'Alaska':'AK',
-						'Arizona':'AZ',
-						'Arkansas':'AR',
-						'California':'CA',
-						'Colorado':'CO',
-						'Connecticut':'CT',
-						'Delaware':'DE',
-						'Florida':'FL',
-						'Georgia':'GA',
-						'Hawaii':'HI',
-						'Idaho':'ID',
-						'Illinois':'IL',
-						'Indiana':'IN',
-						'Iowa':'IA',
-						'Kansas':'KS',
-						'Kentucky':'KY',
-						'Louisiana':'LA',
-						'Maine':'ME',
-						'Maryland':'MD',
-						'Massachusetts':'MA',
-						'Michigan':'MI',
-						'Minnesota':'MN',
-						'Mississippi':'MS',
-						'Missouri':'MO',
-						'Montana':'MT',
-						'Nebraska':'NE',
-						'Nevada':'NV',
-						'New Hampshire':'NH',
-						'New Jersey':'NJ',
-						'New Mexico':'NM',
-						'New York':'NY',
-						'North Carolina':'NC',
-						'North Dakota':'ND',
-						'Ohio':'OH',
-						'Oklahoma':'OK',
-						'Oregon':'OR',
-						'Pennsylvania':'PA',
-						'Rhode Island':'RI',
-						'South Carolina':'SC',
-						'South Dakota':'SD',
-						'Tennessee':'TN',
-						'Texas':'TX',
-						'Utah':'UT',
-						'Vermont':'VT',
-						'Virginia':'VA',
-						'Washington':'WA',
-						'West Virginia':'WV',
-						'Wisconsin':'WI',
-						'Wyoming':'WY'
-					};
-					return states[state];
-				}
-			function wpscCheckSubmitStatus( e ) {
-				var pp_button = jQuery(".make_purchase.wpsc_buy_button");
-				if ( jQuery('input[name=custom_gateway]:checked').val() == 'wpsc_merchant_braintree_v_zero_pp' ) {
-					if ( e && e.keyCode == 13 ) {
-						e.preventDefault();
-						return;
-					}
-					if ( pp_button.is(":visible") ) {
-						pp_button.hide();
-						return;
-					}		
-				}
-				pp_button.show();
-			}
-			function wpscBootstrapBraintree() {
-				//Disable the regular purchase button if using PayPal
-				wpscCheckSubmitStatus();
-				if ( jQuery('input[name=custom_gateway]:checked').val() !== 'wpsc_merchant_braintree_v_zero_cc' && jQuery('input[name=custom_gateway]:checked').val() !== 'wpsc_merchant_braintree_v_zero_pp' ) {
-					return;
-				}
-				if ( components.client ) {
-					return;
-				}
-				braintree.client.create({
-				  authorization: clientToken
-				}, function(err, clientInstance) {
-				  if (err) {
-					console.error(err);
-					return;
-				  }
-				  components.client = clientInstance;
-
-				  braintree.dataCollector.create({
-					client: clientInstance,
-					kount: true
-				  }, function (err, dataCollectorInstance) {
-					if (err) {
-					  console.log(err);
-					  // Handle error in creation of data collector
-					  return;
-					}
-					// At this point, you should access the dataCollectorInstance.deviceData value and provide it
-					// to your server, e.g. by injecting it into your form as a hidden input.
-					components.kount = dataCollectorInstance.deviceData;
-					
-					document.getElementById('pp_btree_card_kount').value = components.kount;
-				  });
-				  
-				  
-				  <?php
-				  if ( self::is_gateway_active( 'wpsc_merchant_braintree_v_zero_cc' ) ) { ?>
-					  create3DSecure( clientInstance );
-					  createHostedFields(clientInstance);
-				  <?php }
-				  if ( self::is_gateway_active( 'wpsc_merchant_braintree_v_zero_pp' ) ) { ?>
-					createPayPalCheckout(clientInstance );
-				  <?php } ?>
-				});
-				if ( components.threeDSecure ) {
-					closeFrame.addEventListener('click', function () {
-					  components.threeDSecure.cancelVerifyCard(removeFrame());
-					});
-				}
-			}
-
-			jQuery( document ).ready( wpscBootstrapBraintree );
-			jQuery( document ).on( 'keypress', '.wpsc_checkout_forms', wpscCheckSubmitStatus );
-			jQuery( 'input[name=\"custom_gateway\"]' ).change( wpscBootstrapBraintree );
-			</script>
+			</style>
 		<?php
 	}
 }

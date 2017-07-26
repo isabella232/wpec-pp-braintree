@@ -48,6 +48,8 @@ class wpsc_merchant_braintree_v_zero_cc extends wpsc_merchant_braintree_v_zero {
 			$submit_for_settlement = false;
 		}
 
+		$order_status = $submit_for_settlement === true ? WPSC_Purchase_Log::ACCEPTED_PAYMENT : WPSC_Purchase_Log::ORDER_RECEIVED;
+		
 		// Check 3DS transaction.
 		$threedcheck = true;
 		$braintree_threedee_secure = get_option( 'braintree_threedee_secure' );
@@ -94,7 +96,7 @@ class wpsc_merchant_braintree_v_zero_cc extends wpsc_merchant_braintree_v_zero {
 				"customer" => [
 					"firstName" => $billing_address['first_name'],
 					"lastName" => $billing_address['last_name'],
-					"phone" => $billing_address['phone'],
+					"phone" => isset( $billing_address['phone'] ) ? $billing_address['phone'] : '',
 					"email" => $email_address
 				],
 				"billing" => [
@@ -127,7 +129,7 @@ class wpsc_merchant_braintree_v_zero_cc extends wpsc_merchant_braintree_v_zero {
 			// In theory all error handling should be done on the client side...?
 			if ($result->success) {
 				// Payment complete
-				wpsc_update_purchase_log_details( $session_id, array( 'processed' => WPSC_Purchase_Log::ACCEPTED_PAYMENT, 'transactid' => $result->transaction->id ), 'sessionid' );
+				wpsc_update_purchase_log_details( $session_id, array( 'processed' => $order_status, 'transactid' => $result->transaction->id ), 'sessionid' );
 
 				$this->go_to_transaction_results( $session_id );
 			} else {
@@ -185,7 +187,7 @@ class wpsc_merchant_braintree_v_zero_cc extends wpsc_merchant_braintree_v_zero {
 		// In theory all error handling should be done on the client side...?
 		if ($result->success) {
 			// Payment complete
-			wpsc_update_purchase_log_details( $session_id, array( 'processed' => WPSC_Purchase_Log::ACCEPTED_PAYMENT, 'transactid' => $result->transaction->id ), 'sessionid' );
+			wpsc_update_purchase_log_details( $session_id, array( 'processed' => $order_status, 'transactid' => $result->transaction->id ), 'sessionid' );
 
 	 		$this->go_to_transaction_results( $session_id );
 		} else {

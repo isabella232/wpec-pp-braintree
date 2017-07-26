@@ -57,7 +57,8 @@ class WPEC_PP_Braintree_V_Zero {
 	public static function add_actions() {
 		add_action( 'wpsc_init', array( self::$instance, 'init' ), 2 );
 		add_action( 'admin_enqueue_scripts', array( self::$instance, 'admin_scripts' ) );
-		add_action( 'wpsc_bottom_of_shopping_cart' , array( 'wpsc_merchant_braintree_v_zero', 'pp_braintree_enqueue_js' ), 100 );
+		add_action( 'wp_enqueue_scripts' , array( 'wpsc_merchant_braintree_v_zero', 'pp_braintree_enqueue_js' ), 100 );
+		add_action( 'wp_head' , array( 'wpsc_merchant_braintree_v_zero', 'pp_braintree_add_css' ), 100 );
 	}
 
 	public static function add_filters() {
@@ -246,4 +247,4 @@ class WPEC_PP_Braintree_V_Zero {
 		exit;		
 	}
 }
-add_action( 'wpsc_pre_init', 'WPEC_PP_Braintree_V_Zero::get_instance' );
+add_action( 'wpsc_pre_load', 'WPEC_PP_Braintree_V_Zero::get_instance' );
