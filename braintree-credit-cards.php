@@ -16,7 +16,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 		// Tev1 fields
 		add_filter( 'wpsc_gateway_checkout_form_wpsc_merchant_braintree_v_zero_cc', array( $this, 'tev1_checkout_fields') );
 		// Tev2 fields
-		add_filter( 'wpsc_default_credit_card_form_fields', array( $this, 'tev2_checkout_fields' ), 10, 2 );
+		add_filter( 'wpsc_default_credit_card_form_fields', array( $this, 'tev2_checkout_fields' ), 99, 2 );
 		add_action( 'wpsc_default_credit_card_form_end', array( $this, 'tev2_checkout_fields_extra' ) );
 	}
 
@@ -26,7 +26,6 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 		if ( $name != $gat_name ) {
 			return $fields;
 		}
-		
 
 		unset($fields['card-name-field']);
 		$fields['card-number-field'] = '<p class="wpsc-form-row wpsc-form-row-wide wpsc-cc-field">

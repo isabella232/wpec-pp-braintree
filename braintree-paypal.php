@@ -3,9 +3,9 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 
 	function __construct() {
 		parent::__construct();
-		
+
 		$this->title            = __( 'PayPal powered by Braintree - PayPal', 'wpsc_authorize_net' );
-		$this->supports         = array( 'tev1' );
+		$this->supports         = array( 'default_credit_card_form', 'tokenization', 'tev1' );
 		$this->sandbox          = $this->setting->get( 'sandbox' ) == 'on' ? true : false;
 		$this->but_size         = $this->setting->get( 'but_size' ) !== null ? $this->setting->get( 'but_size' ) : $this->setting->set( 'but_size', 'responsive' );
 		$this->but_colour       = $this->setting->get( 'but_colour' ) !== null ? $this->setting->get( 'but_colour' ) : $this->setting->set( 'but_colour', 'gold' );
@@ -14,11 +14,11 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 
 	public function init() {
 		parent::init();
-		
+
 		// Tev1 fields
 		add_filter( 'wpsc_gateway_checkout_form_wpsc_merchant_braintree_v_zero_pp', array( $this, 'tev1_checkout_fields') );
 		// Tev2 fields
-		add_filter( 'wpsc_default_credit_card_form_fields', array( $this, 'tev2_checkout_fields' ), 10, 2 );
+		add_filter( 'wpsc_default_credit_card_form_fields', array( $this, 'tev2_checkout_fields' ), 99, 2 );
 	}
 
 	public function tev2_checkout_fields( $fields, $name ) {
@@ -28,26 +28,26 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 		if ( $name != $gat_name ) {
 			return $fields;
 		}
-		
+
 		$fields = array(
 			'bt-pp-button' => '<p class="wpsc-form-row wpsc-form-row-wide wpsc-bt-pp-but-field">
 				<label for="' . esc_attr( $gat_name ) . '-bt-pp-but">' . __( 'Click below to continue to PayPal', 'wp-e-commerce' ) . '</label>
 				<div id="pp_braintree_pp_button"></div>
 			</p>'
 		);
-			
+
 		return $fields;
 	}
 
 	public function tev1_checkout_fields() {
 		$output = '';
-		
+
 		$output .= '<tr><td>' . __( 'Click below to continue to PayPal', 'wp-e-commerce' ) .'</td></tr>';
 		$output .= '<tr><td><div id="pp_braintree_pp_button"></div></td></tr>';
 
 		return $output;
 	}
-	
+
 	/**
 	 * submit method, sends the received data to the payment gateway
 	 * @access public
