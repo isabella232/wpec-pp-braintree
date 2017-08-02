@@ -71,11 +71,11 @@ jQuery(function($) {
 				placeholder: '4111 1111 1111 1111'
 			  },
 			  cvv: {
-				selector: '#bt-cc-card-exp',
+				selector: '#bt-cc-card-cvv',
 				placeholder: '123'
 			  },
 			  expirationDate: {
-				selector: '#bt-cc-card-cvv',
+				selector: '#bt-cc-card-exp',
 				placeholder: 'MM/YYYY'
 			  },
 			}
@@ -87,7 +87,7 @@ jQuery(function($) {
 			}
 			components.hostedFields = hostedFieldsInstance;
 			submit.attr('disabled', false);
-			form.addEventListener('submit', function (event) {
+			form.on('submit', function (event) {
 				if ( gateway !== 'braintree-credit-cards' ) { return; }
 				event.preventDefault();
 				components.hostedFields.tokenize(function (tokenizeErr, payload) {
@@ -151,13 +151,13 @@ jQuery(function($) {
 									if (liabilityShifted) {
 										// The 3D Secure payment was successful so proceed with this nonce
 										document.getElementById('pp_btree_method_nonce').value = response.nonce;
-										jQuery(".wpsc_checkout_forms").submit();
+										form.submit();
 									} else {
 										// The 3D Secure payment failed an initial check so check whether liability shift is possible
 										if (liabilityShiftPossible) {
 											// LiabilityShift is possible so proceed with this nonce
 											document.getElementById('pp_btree_method_nonce').value = response.nonce;
-											jQuery(".wpsc_checkout_forms").submit();
+											form.submit();
 										} else {
 											if ( wpec_ppbt.t3dsonly == 'on' ) {
 												// Check whether the 3D Secure check has to be passed to proceeed. If so then show an error
@@ -167,13 +167,13 @@ jQuery(function($) {
 											} else {
 												// ...and if not just proceed with this nonce
 												document.getElementById('pp_btree_method_nonce').value = response.nonce;
-												jQuery(".wpsc_checkout_forms").submit();
+												form.submit();
 											}
 										}
 									}
 									// 3D Secure finished. Using response.nonce you may proceed with the transaction with the associated server side parameters below.
 									document.getElementById('pp_btree_method_nonce').value = response.nonce;
-									jQuery(".wpsc_checkout_forms").submit();
+									form.submit();
 								} else {
 									// Handle errors
 									console.log('verification error:', err);
@@ -183,7 +183,7 @@ jQuery(function($) {
 						} else {
 							// send the nonce to your server.
 							document.getElementById('pp_btree_method_nonce').value = payload.nonce;
-							jQuery(".wpsc_checkout_forms").submit();
+							form.submit();
 						}
 				});
 			}, false);
@@ -245,7 +245,7 @@ jQuery(function($) {
 					// Submit `payload.nonce` to your server
 					paypalButton.attr('disabled', true);
 					document.getElementById('pp_btree_method_nonce').value = payload.nonce;
-					jQuery(".wpsc_checkout_forms").submit();
+					form.submit();
 				  });
 			  },
 			  onCancel: function (data) {
@@ -254,7 +254,7 @@ jQuery(function($) {
 			  onError: function (err) {
 				console.error('checkout.js error', err);
 			  }
-			}, paypalButton).then(function () {
+			}, document.getElementById( 'pp_braintree_pp_button' )).then(function () {
 			  // The PayPal button will be rendered in an html element with the id
 			  // `paypal-button`. This function will be called when the PayPal button
 			  // is set up and ready to be used.
@@ -319,7 +319,7 @@ jQuery(function($) {
 	}
 
 	function wpscCheckSubmitStatus( e ) {
-		var pp_button = jQuery("wpsc-checkout-form-button, .make_purchase.wpsc_buy_button");
+		var pp_button = $(".wpsc-checkout-form-button, .make_purchase.wpsc_buy_button");
 		gateway = $( 'input[name="custom_gateway"]:checked, .wpsc-field-wpsc_payment_method input:checked' ).val();
 
 		if ( gateway == 'braintree-paypal' ) {
@@ -327,10 +327,11 @@ jQuery(function($) {
 				e.preventDefault();
 				return;
 			}
+
 			if ( pp_button.is(":visible") ) {
 				pp_button.hide();
 				return;
-			}		
+			}
 		}
 		pp_button.show();
 	}
@@ -338,7 +339,7 @@ jQuery(function($) {
 	function wpscBootstrapBraintree() {
 		//Disable the regular purchase button if using PayPal
 		wpscCheckSubmitStatus();
-		
+
 		if ( gateway !== 'braintree-credit-cards' && gateway !== 'braintree-paypal' ) {
 			return;
 		}
