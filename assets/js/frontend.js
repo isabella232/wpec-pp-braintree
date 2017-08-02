@@ -45,7 +45,7 @@ jQuery(function($) {
 		var iframe = bankFrame.querySelector('iframe');
 		modal.classList.add('pp-btree-hosted-fields-modal-hidden');
 		iframe.parentNode.removeChild(iframe);
-		submit.removeAttribute('disabled');
+		submit.attr('disabled', false);;
 	}
 
 	function createHostedFields( clientInstance ) {
@@ -86,7 +86,7 @@ jQuery(function($) {
 				return;
 			}
 			components.hostedFields = hostedFieldsInstance;
-			submit.removeAttribute('disabled');
+			submit.attr('disabled', false);
 			form.addEventListener('submit', function (event) {
 				if ( gateway !== 'braintree-credit-cards' ) { return; }
 				event.preventDefault();
@@ -200,7 +200,7 @@ jQuery(function($) {
 			  return;
 			}
 			components.paypalCheckout = paypalCheckoutInstance;
-			paypalButton.removeAttribute('disabled');
+			paypalButton.attr('disabled', false);
 			// Set up PayPal with the checkout.js library
 			paypal.Button.render({
 				env: wpec_ppbt.sandbox,
@@ -243,7 +243,7 @@ jQuery(function($) {
 				return components.paypalCheckout.tokenizePayment(data)
 				  .then(function (payload) {
 					// Submit `payload.nonce` to your server
-					paypalButton.setAttribute('disabled', true);
+					paypalButton.attr('disabled', true);
 					document.getElementById('pp_btree_method_nonce').value = payload.nonce;
 					jQuery(".wpsc_checkout_forms").submit();
 				  });

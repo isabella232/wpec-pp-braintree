@@ -26,6 +26,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 		if ( $name != $gat_name ) {
 			return $fields;
 		}
+		
 
 		unset($fields['card-name-field']);
 		$fields['card-number-field'] = '<p class="wpsc-form-row wpsc-form-row-wide wpsc-cc-field">
