@@ -6,7 +6,7 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 
 		$this->title            = __( 'PayPal powered by Braintree - PayPal', 'wpsc_authorize_net' );
 		$this->supports         = array( 'default_credit_card_form', 'tokenization', 'tev1' );
-		$this->sandbox          = $this->setting->get( 'sandbox' ) == 'on' ? true : false;
+		$this->sandbox          = $this->setting->get( 'sandbox' ) == '1' ? true : false;
 		$this->but_size         = $this->setting->get( 'but_size' ) !== null ? $this->setting->get( 'but_size' ) : $this->setting->set( 'but_size', 'responsive' );
 		$this->but_colour       = $this->setting->get( 'but_colour' ) !== null ? $this->setting->get( 'but_colour' ) : $this->setting->set( 'but_colour', 'gold' );
 		$this->but_shape        = $this->setting->get( 'but_shape' ) !== null ? $this->setting->get( 'but_shape' ) : $this->setting->set( 'but_shape', 'pill' );
@@ -282,8 +282,8 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 				<label><?php _e( 'Sandbox Mode', 'wpsc_authorize_net' ); ?></label>
 			</td>
 			<td>
-				<label><input <?php checked( $this->setting->get( 'sandbox' ) ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'sandbox' ) ); ?>" value="on" /> <?php _e( 'Yes', 'wpsc_authorize_net' ); ?></label>&nbsp;&nbsp;&nbsp;
-				<label><input <?php checked( (bool) $this->setting->get( 'sandbox' ), false ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'sandbox' ) ); ?>" value="off" /> <?php _e( 'No', 'wpsc_authorize_net' ); ?></label>
+				<label><input <?php checked( $this->setting->get( 'sandbox' ) ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'sandbox' ) ); ?>" value="1" /> <?php _e( 'Yes', 'wpsc_authorize_net' ); ?></label>&nbsp;&nbsp;&nbsp;
+				<label><input <?php checked( (bool) $this->setting->get( 'sandbox' ), false ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'sandbox' ) ); ?>" value="0" /> <?php _e( 'No', 'wpsc_authorize_net' ); ?></label>
 			</td>
 		</tr>
 		<!-- Error Logging -->

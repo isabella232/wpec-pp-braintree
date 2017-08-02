@@ -17,6 +17,7 @@ jQuery(function($) {
 	var cart_form = $('#wpsc-checkout-form, .wpsc_checkout_forms' );
 	var submit_btn = $('.wpsc-checkout-form-button, .wpsc_buy_button');
 	var paypalButton = $('#pp_braintree_pp_button');
+	var nonceElement = $('#pp_btree_method_nonce, #wpsc-checkout-form-pp_btree_method_nonce');
 
 	function create3DSecure( clientInstance ) {
 		// DO 3DS
@@ -150,13 +151,13 @@ jQuery(function($) {
 									var liabilityShiftPossible =  response.liabilityShiftPossible; // true || false
 									if (liabilityShifted) {
 										// The 3D Secure payment was successful so proceed with this nonce
-										document.getElementById('pp_btree_method_nonce').value = response.nonce;
+										nonceElement.value = response.nonce;
 										cart_form.submit();
 									} else {
 										// The 3D Secure payment failed an initial check so check whether liability shift is possible
 										if (liabilityShiftPossible) {
 											// LiabilityShift is possible so proceed with this nonce
-											document.getElementById('pp_btree_method_nonce').value = response.nonce;
+											nonceElement.value = response.nonce;
 											cart_form.submit();
 										} else {
 											if ( wpec_ppbt.t3dsonly == 'on' ) {
@@ -166,13 +167,13 @@ jQuery(function($) {
 											  return;
 											} else {
 												// ...and if not just proceed with this nonce
-												document.getElementById('pp_btree_method_nonce').value = response.nonce;
+												nonceElement.value = response.nonce;
 												cart_form.submit();
 											}
 										}
 									}
 									// 3D Secure finished. Using response.nonce you may proceed with the transaction with the associated server side parameters below.
-									document.getElementById('pp_btree_method_nonce').value = response.nonce;
+									nonceElement.value = response.nonce;
 									cart_form.submit();
 								} else {
 									// Handle errors
@@ -182,7 +183,7 @@ jQuery(function($) {
 							});
 						} else {
 							// send the nonce to your server.
-							document.getElementById('pp_btree_method_nonce').value = payload.nonce;
+							nonceElement.value = payload.nonce;
 							cart_form.submit();
 						}
 				});
@@ -244,7 +245,7 @@ jQuery(function($) {
 				  .then(function (payload) {
 					// Submit `payload.nonce` to your server
 					paypalButton.attr('disabled', true);
-					document.getElementById('pp_btree_method_nonce').value = payload.nonce;
+					nonceElement.value = payload.nonce;
 					cart_form.submit();
 				  });
 			  },
@@ -325,7 +326,6 @@ jQuery(function($) {
 		if ( gateway == 'braintree-paypal' ) {
 			if ( e && e.keyCode == 13 ) {
 				e.preventDefault();
-				return;
 			}
 
 			if ( pp_button.is(":visible") ) {
@@ -333,6 +333,7 @@ jQuery(function($) {
 				return;
 			}
 		}
+
 		pp_button.show();
 	}
 

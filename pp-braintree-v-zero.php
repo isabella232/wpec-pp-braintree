@@ -126,7 +126,7 @@ class WPEC_Btree_Helpers {
 		
 		
 		$bt_pp_sandbox = $bt_pp->get('sandbox');
-		$pp_sandbox = $bt_pp_sandbox === true ? 'sandbox' : 'production' ;	
+		$pp_sandbox = $bt_pp_sandbox == '1' ? 'sandbox' : 'production' ;	
 		
 		// Set PP Button styles
 		$pp_but_label = get_option( 'bt_vzero_pp_payments_but_label' ) != false ? get_option( 'bt_vzero_pp_payments_but_label' ) : 'pay' ;
