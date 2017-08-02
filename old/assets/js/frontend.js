@@ -8,15 +8,13 @@ jQuery(function($) {
 	  paypalCheckout: null,
 	  kount: null,
 	};
-	
-	var gateway;
 	var my3DSContainer;
-	var modal = $('#pp-btree-hosted-fields-modal');
-	var bankFrame = $('.pp-btree-hosted-fields-bt-modal-body');
-	var closeFrame = $('#pp-btree-hosted-fields-text-close');
-	var form = $('#wpsc-checkout-form, .wpsc_checkout_forms' );
-	var submit = $('.wpsc-checkout-form-button, .wpsc_buy_button');
-	var paypalButton = $('#pp_braintree_pp_button');
+	var modal = document.getElementById('pp-btree-hosted-fields-modal');
+	var bankFrame = document.querySelector('.pp-btree-hosted-fields-bt-modal-body');
+	var closeFrame = document.getElementById('pp-btree-hosted-fields-text-close');
+	var form = document.querySelector('.wpsc_checkout_forms');
+	var submit = document.querySelector('.make_purchase.wpsc_buy_button');
+	var paypalButton = document.querySelector('#pp_braintree_pp_button');
 
 	function create3DSecure( clientInstance ) {
 		// DO 3DS
@@ -33,21 +31,18 @@ jQuery(function($) {
 			});
 		}
 	}
-
 	function addFrame(err, iframe) {
 		// Set up your UI and add the iframe.
 		bankFrame.appendChild(iframe);
 		modal.classList.remove('pp-btree-hosted-fields-modal-hidden');
 		modal.focus();
 	}
-
 	function removeFrame() {
 		var iframe = bankFrame.querySelector('iframe');
 		modal.classList.add('pp-btree-hosted-fields-modal-hidden');
 		iframe.parentNode.removeChild(iframe);
 		submit.removeAttribute('disabled');
 	}
-
 	function createHostedFields( clientInstance ) {
 		braintree.hostedFields.create({
 			client: clientInstance,
@@ -71,11 +66,11 @@ jQuery(function($) {
 				placeholder: '4111 1111 1111 1111'
 			  },
 			  cvv: {
-				selector: '#bt-cc-card-exp',
+				selector: '#bt-cc-card-cvv',
 				placeholder: '123'
 			  },
 			  expirationDate: {
-				selector: '#bt-cc-card-cvv',
+				selector: '#bt-cc-card-exp',
 				placeholder: 'MM/YYYY'
 			  },
 			}
@@ -88,7 +83,7 @@ jQuery(function($) {
 			components.hostedFields = hostedFieldsInstance;
 			submit.removeAttribute('disabled');
 			form.addEventListener('submit', function (event) {
-				if ( gateway !== 'braintree-credit-cards' ) { return; }
+				if ( jQuery('input[name=custom_gateway]:checked').val() !== 'wpsc_merchant_braintree_v_zero_cc' ) { return; }
 				event.preventDefault();
 				components.hostedFields.tokenize(function (tokenizeErr, payload) {
 					if (tokenizeErr) {
@@ -189,7 +184,6 @@ jQuery(function($) {
 			}, false);
 		});
 	};
-
 	function createPayPalCheckout( clientInstance ) {
 		  braintree.paypalCheckout.create({
 			client: clientInstance
@@ -205,7 +199,7 @@ jQuery(function($) {
 			paypal.Button.render({
 				env: wpec_ppbt.sandbox,
 				style: {
-					label: 'pay',
+					label: wpec_ppbt.but_label,
 					size:  wpec_ppbt.but_size,
 					shape: wpec_ppbt.but_shape,
 					color: wpec_ppbt.but_colour,
@@ -263,66 +257,63 @@ jQuery(function($) {
 	};
 
 	function replace_state_code( state ) {
-		var states = {
-			'Alabama':'AL',
-			'Alaska':'AK',
-			'Arizona':'AZ',
-			'Arkansas':'AR',
-			'California':'CA',
-			'Colorado':'CO',
-			'Connecticut':'CT',
-			'Delaware':'DE',
-			'Florida':'FL',
-			'Georgia':'GA',
-			'Hawaii':'HI',
-			'Idaho':'ID',
-			'Illinois':'IL',
-			'Indiana':'IN',
-			'Iowa':'IA',
-			'Kansas':'KS',
-			'Kentucky':'KY',
-			'Louisiana':'LA',
-			'Maine':'ME',
-			'Maryland':'MD',
-			'Massachusetts':'MA',
-			'Michigan':'MI',
-			'Minnesota':'MN',
-			'Mississippi':'MS',
-			'Missouri':'MO',
-			'Montana':'MT',
-			'Nebraska':'NE',
-			'Nevada':'NV',
-			'New Hampshire':'NH',
-			'New Jersey':'NJ',
-			'New Mexico':'NM',
-			'New York':'NY',
-			'North Carolina':'NC',
-			'North Dakota':'ND',
-			'Ohio':'OH',
-			'Oklahoma':'OK',
-			'Oregon':'OR',
-			'Pennsylvania':'PA',
-			'Rhode Island':'RI',
-			'South Carolina':'SC',
-			'South Dakota':'SD',
-			'Tennessee':'TN',
-			'Texas':'TX',
-			'Utah':'UT',
-			'Vermont':'VT',
-			'Virginia':'VA',
-			'Washington':'WA',
-			'West Virginia':'WV',
-			'Wisconsin':'WI',
-			'Wyoming':'WY'
-		};
-		return states[state];
-	}
-
+			var states = {
+				'Alabama':'AL',
+				'Alaska':'AK',
+				'Arizona':'AZ',
+				'Arkansas':'AR',
+				'California':'CA',
+				'Colorado':'CO',
+				'Connecticut':'CT',
+				'Delaware':'DE',
+				'Florida':'FL',
+				'Georgia':'GA',
+				'Hawaii':'HI',
+				'Idaho':'ID',
+				'Illinois':'IL',
+				'Indiana':'IN',
+				'Iowa':'IA',
+				'Kansas':'KS',
+				'Kentucky':'KY',
+				'Louisiana':'LA',
+				'Maine':'ME',
+				'Maryland':'MD',
+				'Massachusetts':'MA',
+				'Michigan':'MI',
+				'Minnesota':'MN',
+				'Mississippi':'MS',
+				'Missouri':'MO',
+				'Montana':'MT',
+				'Nebraska':'NE',
+				'Nevada':'NV',
+				'New Hampshire':'NH',
+				'New Jersey':'NJ',
+				'New Mexico':'NM',
+				'New York':'NY',
+				'North Carolina':'NC',
+				'North Dakota':'ND',
+				'Ohio':'OH',
+				'Oklahoma':'OK',
+				'Oregon':'OR',
+				'Pennsylvania':'PA',
+				'Rhode Island':'RI',
+				'South Carolina':'SC',
+				'South Dakota':'SD',
+				'Tennessee':'TN',
+				'Texas':'TX',
+				'Utah':'UT',
+				'Vermont':'VT',
+				'Virginia':'VA',
+				'Washington':'WA',
+				'West Virginia':'WV',
+				'Wisconsin':'WI',
+				'Wyoming':'WY'
+			};
+			return states[state];
+		}
 	function wpscCheckSubmitStatus( e ) {
-		var pp_button = jQuery("wpsc-checkout-form-button, .make_purchase.wpsc_buy_button");
-		gateway = $( 'input[name="custom_gateway"]:checked, .wpsc-field-wpsc_payment_method input:checked' ).val();
-
-		if ( gateway == 'braintree-paypal' ) {
+		var pp_button = jQuery(".make_purchase.wpsc_buy_button");
+		if ( jQuery('input[name=custom_gateway]:checked').val() == 'wpsc_merchant_braintree_v_zero_pp' ) {
 			if ( e && e.keyCode == 13 ) {
 				e.preventDefault();
 				return;
@@ -334,19 +325,15 @@ jQuery(function($) {
 		}
 		pp_button.show();
 	}
-
 	function wpscBootstrapBraintree() {
 		//Disable the regular purchase button if using PayPal
 		wpscCheckSubmitStatus();
-		
-		if ( gateway !== 'braintree-credit-cards' && gateway !== 'braintree-paypal' ) {
+		if ( jQuery('input[name=custom_gateway]:checked').val() !== 'wpsc_merchant_braintree_v_zero_cc' && jQuery('input[name=custom_gateway]:checked').val() !== 'wpsc_merchant_braintree_v_zero_pp' ) {
 			return;
 		}
-
 		if ( components.client ) {
 			return;
 		}
-
 		braintree.client.create({
 		  authorization: clientToken
 		}, function(err, clientInstance) {
@@ -387,9 +374,7 @@ jQuery(function($) {
 		}
 	}
 
-	$( document ).ready( wpscBootstrapBraintree );
-	$( document ).on( 'keypress', '.wpsc_checkout_forms', wpscCheckSubmitStatus );
-	$( document ).on( 'keypress', '#wpsc-checkout-form', wpscCheckSubmitStatus );
-	$( 'input[name=\"custom_gateway\"]' ).change( wpscBootstrapBraintree );
-	$( 'input[name=\"wpsc_payment_method\"]' ).change( wpscBootstrapBraintree );
+	jQuery( document ).ready( wpscBootstrapBraintree );
+	jQuery( document ).on( 'keypress', '.wpsc_checkout_forms', wpscCheckSubmitStatus );
+	jQuery( 'input[name=\"custom_gateway\"]' ).change( wpscBootstrapBraintree );
 });
