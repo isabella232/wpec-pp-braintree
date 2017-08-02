@@ -14,8 +14,8 @@ jQuery(function($) {
 	var modal = $('#pp-btree-hosted-fields-modal');
 	var bankFrame = $('.pp-btree-hosted-fields-bt-modal-body');
 	var closeFrame = $('#pp-btree-hosted-fields-text-close');
-	var form = $('#wpsc-checkout-form, .wpsc_checkout_forms' );
-	var submit = $('.wpsc-checkout-form-button, .wpsc_buy_button');
+	var cart_form = $('#wpsc-checkout-form, .wpsc_checkout_forms' );
+	var submit_btn = $('.wpsc-checkout-form-button, .wpsc_buy_button');
 	var paypalButton = $('#pp_braintree_pp_button');
 
 	function create3DSecure( clientInstance ) {
@@ -45,7 +45,7 @@ jQuery(function($) {
 		var iframe = bankFrame.querySelector('iframe');
 		modal.classList.add('pp-btree-hosted-fields-modal-hidden');
 		iframe.parentNode.removeChild(iframe);
-		submit.attr('disabled', false);;
+		submit_btn.attr('disabled', false);
 	}
 
 	function createHostedFields( clientInstance ) {
@@ -86,8 +86,8 @@ jQuery(function($) {
 				return;
 			}
 			components.hostedFields = hostedFieldsInstance;
-			submit.attr('disabled', false);
-			form.on('submit', function (event) {
+			submit_btn.attr('disabled', false);
+			cart_form.on('submit', function (event) {
 				if ( gateway !== 'braintree-credit-cards' ) { return; }
 				event.preventDefault();
 				components.hostedFields.tokenize(function (tokenizeErr, payload) {
@@ -151,13 +151,13 @@ jQuery(function($) {
 									if (liabilityShifted) {
 										// The 3D Secure payment was successful so proceed with this nonce
 										document.getElementById('pp_btree_method_nonce').value = response.nonce;
-										form.submit();
+										cart_form.submit();
 									} else {
 										// The 3D Secure payment failed an initial check so check whether liability shift is possible
 										if (liabilityShiftPossible) {
 											// LiabilityShift is possible so proceed with this nonce
 											document.getElementById('pp_btree_method_nonce').value = response.nonce;
-											form.submit();
+											cart_form.submit();
 										} else {
 											if ( wpec_ppbt.t3dsonly == 'on' ) {
 												// Check whether the 3D Secure check has to be passed to proceeed. If so then show an error
@@ -167,13 +167,13 @@ jQuery(function($) {
 											} else {
 												// ...and if not just proceed with this nonce
 												document.getElementById('pp_btree_method_nonce').value = response.nonce;
-												form.submit();
+												cart_form.submit();
 											}
 										}
 									}
 									// 3D Secure finished. Using response.nonce you may proceed with the transaction with the associated server side parameters below.
 									document.getElementById('pp_btree_method_nonce').value = response.nonce;
-									form.submit();
+									cart_form.submit();
 								} else {
 									// Handle errors
 									console.log('verification error:', err);
@@ -183,7 +183,7 @@ jQuery(function($) {
 						} else {
 							// send the nonce to your server.
 							document.getElementById('pp_btree_method_nonce').value = payload.nonce;
-							form.submit();
+							cart_form.submit();
 						}
 				});
 			}, false);
@@ -245,7 +245,7 @@ jQuery(function($) {
 					// Submit `payload.nonce` to your server
 					paypalButton.attr('disabled', true);
 					document.getElementById('pp_btree_method_nonce').value = payload.nonce;
-					form.submit();
+					cart_form.submit();
 				  });
 			  },
 			  onCancel: function (data) {
@@ -382,7 +382,7 @@ jQuery(function($) {
 		  }
 		});
 		if ( components.threeDSecure ) {
-			closeFrame.addEventListener('click', function () {
+			closeFrame.on('click', function () {
 			  components.threeDSecure.cancelVerifyCard(removeFrame());
 			});
 		}
