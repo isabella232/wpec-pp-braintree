@@ -1,4 +1,5 @@
-jQuery(function($) {
+/*global jQuery */
+(function($) {
 	var clientToken = wpec_ppbt.ctoken;
 	var errmsg = '';
 	var components = {
@@ -8,7 +9,7 @@ jQuery(function($) {
 	  paypalCheckout: null,
 	  kount: null,
 	};
-	
+
 	var gateway;
 	var my3DSContainer;
 	var modal = $('#pp-btree-hosted-fields-modal');
@@ -201,7 +202,7 @@ jQuery(function($) {
 			  return;
 			}
 			components.paypalCheckout = paypalCheckoutInstance;
-			paypalButton.attr('disabled', false);
+			//paypalButton.attr('disabled', false);
 			// Set up PayPal with the checkout.js library
 			paypal.Button.render({
 				env: wpec_ppbt.sandbox,
@@ -244,7 +245,7 @@ jQuery(function($) {
 				return components.paypalCheckout.tokenizePayment(data)
 				  .then(function (payload) {
 					// Submit `payload.nonce` to your server
-					paypalButton.attr('disabled', true);
+					//paypalButton.attr('disabled', true);
 					nonceElement.value = payload.nonce;
 					cart_form.submit();
 				  });
@@ -320,7 +321,7 @@ jQuery(function($) {
 	}
 
 	function wpscCheckSubmitStatus( e ) {
-		var pp_button = $(".wpsc-checkout-form-button, .make_purchase.wpsc_buy_button");
+		var pp_button = $( '.wpsc-checkout-form-button, .wpsc_buy_button' );
 		gateway = $( 'input[name="custom_gateway"]:checked, .wpsc-field-wpsc_payment_method input:checked' ).val();
 
 		if ( gateway == 'braintree-paypal' ) {
@@ -394,4 +395,4 @@ jQuery(function($) {
 	$( document ).on( 'keypress', '#wpsc-checkout-form', wpscCheckSubmitStatus );
 	$( 'input[name=\"custom_gateway\"]' ).change( wpscBootstrapBraintree );
 	$( 'input[name=\"wpsc_payment_method\"]' ).change( wpscBootstrapBraintree );
-});
+} )( jQuery );
