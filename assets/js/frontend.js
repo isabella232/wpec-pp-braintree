@@ -69,15 +69,15 @@
 			},
 			fields: {
 			  number: {
-				selector: '#bt-cc-card-number',
+				selector: '#braintree-credit-cards-card-number',
 				placeholder: '4111 1111 1111 1111'
 			  },
 			  cvv: {
-				selector: '#bt-cc-card-cvv',
+				selector: '#braintree-credit-cards-card-cvc',
 				placeholder: '123'
 			  },
 			  expirationDate: {
-				selector: '#bt-cc-card-exp',
+				selector: '#braintree-credit-cards-card-expiry',
 				placeholder: 'MM/YYYY'
 			  },
 			}
@@ -343,6 +343,10 @@
 		//Disable the regular purchase button if using PayPal
 		wpscCheckSubmitStatus();
 
+		if ( gateway !== 'braintree-credit-cards' && gateway !== 'braintree-paypal' ) {
+			return;
+		}
+		
 		if ( components.client ) {
 			return;
 		}

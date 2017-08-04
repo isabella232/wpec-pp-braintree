@@ -5,7 +5,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 		parent::__construct();
 		$this->title            = __( 'PayPal powered by Braintree - Cards', 'wpsc_authorize_net' );
 		$this->supports         = array( 'default_credit_card_form', 'tokenization', 'tev1' );
-		$this->sandbox       = $this->setting->get( 'sandbox' ) == '1' ? true : false;
+		$this->sandbox          = $this->setting->get( 'sandbox' ) == '1' ? true : false;
 		$this->payment_capture 	= $this->setting->get( 'payment_capture' ) !== null ? $this->setting->get( 'payment_capture' ) : 'standard';
 		// Define user set variables
 	}
@@ -14,7 +14,8 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 		parent::init();
 		
 		// Tev1 fields
-		add_filter( 'wpsc_gateway_checkout_form_wpsc_merchant_braintree_v_zero_cc', array( $this, 'tev1_checkout_fields') );
+		add_action( 'wpsc_tev1_default_credit_card_form_fields', array( $this, 'tev1_checkout_fields'), 90, 2 );
+		add_action( 'wpsc_tev1_default_credit_card_form_end', array( $this, 'tev1_checkout_fields_extra') );
 		// Tev2 fields
 		add_filter( 'wpsc_default_credit_card_form_fields', array( $this, 'tev2_checkout_fields' ), 99, 2 );
 		add_action( 'wpsc_default_credit_card_form_end', array( $this, 'tev2_checkout_fields_extra' ) );
@@ -26,20 +27,19 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 		if ( $name != $gat_name ) {
 			return $fields;
 		}
-		
 
 		unset($fields['card-name-field']);
 		$fields['card-number-field'] = '<p class="wpsc-form-row wpsc-form-row-wide wpsc-cc-field">
 				<label for="' . esc_attr( $name ) . '-card-number">' . __( 'Card Number', 'wp-e-commerce' ) . ' <span class="required">*</span></label>
-				<div id="bt-cc-card-number" class="bt-hosted-field"></div>
+				<div id="braintree-credit-cards-card-number" class="bt-hosted-field"></div>
 			</p>';
 		$fields['card-expiry-field'] = '<p class="wpsc-form-row-middle wpsc-cc-field">
 				<label for="' . esc_attr( $name ) . '-card-expiry">' . __( 'Expiration Date', 'wp-e-commerce' ) . ' <span class="required">*</span></label>
-				<div id="bt-cc-card-exp" class="bt-hosted-field"></div>
+				<div id="braintree-credit-cards-card-expiry" class="bt-hosted-field"></div>
 			</p>';
 		$fields['card-cvc-field'] = '<p class="wpsc-form-row-last wpsc-cc-field">
 				<label for="' . esc_attr( $name ) . '-card-cvc">' . __( 'Card Code', 'wp-e-commerce' ) . ' <span class="required">*</span></label>
-				<div id="bt-cc-card-cvv" class="bt-hosted-field"></div></td>
+				<div id="braintree-credit-cards-card-cvc" class="bt-hosted-field"></div></td>
 			</p>';
 
 		return $fields;
@@ -64,19 +64,39 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 			</div>';
 	}
 
-	public function tev1_checkout_fields() {
+	public function tev1_checkout_fields( $fields, $name ) {
+		$gat_name = str_replace( '_', '-', $this->setting->gateway_name );
+
+		if ( $name != $gat_name ) {
+			return $fields;
+		}
+
+		$fields['card-number-field'] = '<tr><td class="wpsc-form-row wpsc-form-row-wide wpsc-cc-field">
+					<label for="' . esc_attr( $name ) . '-card-number">' . __( 'Card Number', 'wp-e-commerce' ) . ' <span class="required">*</span></label></td>
+					<td><div id="braintree-credit-cards-card-number" class="bt-hosted-field"></div></td>
+				</tr>';
+		$fields['card-expiry-field'] = '<tr><td class="wpsc-form-row-middle wpsc-cc-field">
+					<label for="' . esc_attr( $name ) . '-card-expiry">' . __( 'Expiration Date', 'wp-e-commerce' ) . ' <span class="required">*</span></label></td>
+					<td><div id="braintree-credit-cards-card-expiry" class="bt-hosted-field"></div></td>
+				</tr>';
+		$fields['card-cvc-field'] = '<tr><td class="wpsc-form-row-last wpsc-cc-field">
+					<label for="' . esc_attr( $name ) . '-card-cvc">' . __( 'Card Code', 'wp-e-commerce' ) . ' <span class="required">*</span></label></td>
+					<td><div id="braintree-credit-cards-card-cvc" class="bt-hosted-field"></div></td>
+				</tr>';
+
+		return $fields;
+	}
+	
+	public function tev1_checkout_fields_extra( $name ) {
+		$gat_name = str_replace( '_', '-', $this->setting->gateway_name );
+
+		if ( $name != $gat_name ) {
+			return;
+		}
+		
 		$output = '';
 
-		$output .= '<tr><td><label class="hosted-fields--label" for="card-number">Card Number</label>
-						<div id="bt-cc-card-number" class="bt-hosted-field"></div>
-					</td></tr>
-					<tr><td><label class="hosted-fields--label" for="expiration-date">Expiration Date</label>
-						<div id="bt-cc-card-exp" class="bt-hosted-field"></div>
-					</td></tr>
-					<tr><td><label class="hosted-fields--label" for="cvv">CVV</label>
-						<div id="bt-cc-card-cvv" class="bt-hosted-field"></div></td>
-					</tr>
-
+		$output .= '
 			<div id="pp-btree-hosted-fields-modal" class="pp-btree-hosted-fields-modal-hidden" tabindex="-1">
 				<div class="pp-btree-hosted-fields-bt-mask"></div>
 					<div class="pp-btree-hosted-fields-bt-modal-frame">
@@ -88,7 +108,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 				  </div>
 			</div>';
 
-		return $output;		
+		echo $output;		
 	}
 	
 	public function process() {

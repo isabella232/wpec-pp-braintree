@@ -16,7 +16,7 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 		parent::init();
 
 		// Tev1 fields
-		add_filter( 'wpsc_gateway_checkout_form_wpsc_merchant_braintree_v_zero_pp', array( $this, 'tev1_checkout_fields') );
+		add_filter( 'wpsc_tev1_default_credit_card_form_fields', array( $this, 'tev1_checkout_fields'), 99, 2 );
 		// Tev2 fields
 		add_filter( 'wpsc_default_credit_card_form_fields', array( $this, 'tev2_checkout_fields' ), 90, 2 );
 	}
@@ -39,13 +39,22 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 		return $fields;
 	}
 
-	public function tev1_checkout_fields() {
-		$output = '';
+	public function tev1_checkout_fields( $fields, $name ) {
+		$fields = array();
+		$gat_name = str_replace( '_', '-', $this->setting->gateway_name );
 
-		$output .= '<tr><td>' . __( 'Click below to continue to PayPal', 'wp-e-commerce' ) .'</td></tr>';
-		$output .= '<tr><td><div id="pp_braintree_pp_button"></div></td></tr>';
+		if ( $name != $gat_name ) {
+			return $fields;
+		}
 
-		return $output;
+		$fields = array(
+			'bt-pp-button' => '<tr><td><p class="wpsc-form-row wpsc-form-row-wide wpsc-bt-pp-but-field">
+				<label for="' . esc_attr( $gat_name ) . '-bt-pp-but">' . __( 'Click below to continue to PayPal', 'wp-e-commerce' ) . '</label></td></tr>
+				<tr><td><div id="pp_braintree_pp_button"></div></td></tr>'
+		);
+
+		return $fields;
+
 	}
 
 	/**
