@@ -106,58 +106,62 @@ class WPEC_Btree_Helpers {
 		if ( ! self::is_gateway_active( 'braintree-credit-cards' ) && ! self::is_gateway_active( 'braintree-paypal' ) ) {
 			return;
 		}
+		
+		$is_cart = wpsc_is_theme_engine( '1.0' ) ? wpsc_is_checkout() : ( _wpsc_get_current_controller_method() == 'payment' );
+		if ( $is_cart ) {
 
-		// Check if we are using Auth and connected
-		if ( self::bt_auth_can_connect() && self::bt_auth_is_connected() ) {
-			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
-			$gateway = new Braintree_Gateway( array(
-				'accessToken' => $acc_token
-			));
-			$clientToken = $gateway->clientToken()->generate();
-		} else {
-			self::setBraintreeConfiguration();
-			$clientToken = Braintree_ClientToken::generate();
+			// Check if we are using Auth and connected
+			if ( self::bt_auth_can_connect() && self::bt_auth_is_connected() ) {
+				$acc_token = get_option( 'wpec_braintree_auth_access_token' );
+				$gateway = new Braintree_Gateway( array(
+					'accessToken' => $acc_token
+				));
+				$clientToken = $gateway->clientToken()->generate();
+			} else {
+				self::setBraintreeConfiguration();
+				$clientToken = Braintree_ClientToken::generate();
+			}
+			
+			//Get Cards Gateway settings
+			$bt_cc = new WPSC_Payment_Gateway_Setting( 'braintree-credit-cards' );
+			//Get PayPal Gateway settings
+			$bt_pp = new WPSC_Payment_Gateway_Setting( 'braintree-paypal' );
+			
+			
+			$bt_pp_sandbox = $bt_pp->get('sandbox');
+			$pp_sandbox = $bt_pp_sandbox == '1' ? 'sandbox' : 'production' ;	
+			
+			// Set PP Button styles
+			$pp_but_label = get_option( 'bt_vzero_pp_payments_but_label' ) != false ? get_option( 'bt_vzero_pp_payments_but_label' ) : 'pay' ;
+			$pp_but_colour = get_option( 'bt_vzero_pp_payments_but_colour' ) != false ? get_option( 'bt_vzero_pp_payments_but_colour' ) : 'gold' ;
+			$pp_but_size = get_option( 'bt_vzero_pp_payments_but_size' ) != false ? get_option( 'bt_vzero_pp_payments_but_size' ) : 'responsive' ;
+			$pp_but_shape = get_option( 'bt_vzero_pp_payments_but_shape' ) != false ? get_option( 'bt_vzero_pp_payments_but_shape' ) : 'pill' ;		
+
+			wp_register_script( 'pp-braintree', WPEC_PPBRAINTREE_VZERO_PLUGIN_URL . 'assets/js/frontend.js', array( 'jquery' ), null, true );
+			wp_localize_script( 'pp-braintree', 'wpec_ppbt', array(
+				't3ds' => $bt_cc->get('three_d_secure'),
+				't3dsonly' => $bt_cc->get('three_d_secure_only'),
+				'ctoken' => $clientToken,
+				'sandbox' => $pp_sandbox,
+				'but_label' => $pp_but_label,
+				'but_colour' => $pp_but_colour,
+				'but_size' => $pp_but_size,
+				'but_shape' => $pp_but_shape,
+				'cart_total' => wpsc_cart_total(false),
+				'currency' => wpsc_get_currency_code(),
+				'is_shipping' => wpsc_uses_shipping(),
+				'is_cc_active' => self::is_gateway_active( 'braintree-credit-cards' ),
+				'is_pp_active' => self::is_gateway_active( 'braintree-paypal' ),
+				)
+			);
+			wp_enqueue_script( 'pp-braintree' );
+			wp_enqueue_script( 'ppbtclient', 'https://js.braintreegateway.com/web/3.20.0/js/client.min.js', array(), null, true );
+			wp_enqueue_script( 'ppbthosted', 'https://js.braintreegateway.com/web/3.20.0/js/hosted-fields.min.js', array(), null, true );
+			wp_enqueue_script( 'ppbtppcheckout', 'https://js.braintreegateway.com/web/3.20.0/js/paypal-checkout.min.js', array(), null, true );
+			wp_enqueue_script( 'ppbtppapi', 'https://www.paypalobjects.com/api/checkout.js', array(), null, true );
+			wp_enqueue_script( 'ppbtthreeds', 'https://js.braintreegateway.com/web/3.20.0/js/three-d-secure.min.js', array(), null, true );
+			wp_enqueue_script( 'ppbtdata', 'https://js.braintreegateway.com/web/3.20.0/js/data-collector.min.js', array(), null, true );
 		}
-		
-		//Get Cards Gateway settings
-		$bt_cc = new WPSC_Payment_Gateway_Setting( 'braintree-credit-cards' );
-		//Get PayPal Gateway settings
-		$bt_pp = new WPSC_Payment_Gateway_Setting( 'braintree-paypal' );
-		
-		
-		$bt_pp_sandbox = $bt_pp->get('sandbox');
-		$pp_sandbox = $bt_pp_sandbox == '1' ? 'sandbox' : 'production' ;	
-		
-		// Set PP Button styles
-		$pp_but_label = get_option( 'bt_vzero_pp_payments_but_label' ) != false ? get_option( 'bt_vzero_pp_payments_but_label' ) : 'pay' ;
-		$pp_but_colour = get_option( 'bt_vzero_pp_payments_but_colour' ) != false ? get_option( 'bt_vzero_pp_payments_but_colour' ) : 'gold' ;
-		$pp_but_size = get_option( 'bt_vzero_pp_payments_but_size' ) != false ? get_option( 'bt_vzero_pp_payments_but_size' ) : 'responsive' ;
-		$pp_but_shape = get_option( 'bt_vzero_pp_payments_but_shape' ) != false ? get_option( 'bt_vzero_pp_payments_but_shape' ) : 'pill' ;		
-
-		wp_register_script( 'pp-braintree', WPEC_PPBRAINTREE_VZERO_PLUGIN_URL . 'assets/js/frontend.js', array( 'jquery' ), null, true );
-		wp_localize_script( 'pp-braintree', 'wpec_ppbt', array(
-			't3ds' => $bt_cc->get('three_d_secure'),
-			't3dsonly' => $bt_cc->get('three_d_secure_only'),
-			'ctoken' => $clientToken,
-			'sandbox' => $pp_sandbox,
-			'but_label' => $pp_but_label,
-			'but_colour' => $pp_but_colour,
-			'but_size' => $pp_but_size,
-			'but_shape' => $pp_but_shape,
-			'cart_total' => wpsc_cart_total(false),
-			'currency' => wpsc_get_currency_code(),
-			'is_shipping' => wpsc_uses_shipping(),
-			'is_cc_active' => self::is_gateway_active( 'braintree-credit-cards' ),
-			'is_pp_active' => self::is_gateway_active( 'braintree-paypal' ),
-			)
-		);
-		wp_enqueue_script( 'pp-braintree' );
-		wp_enqueue_script( 'ppbtclient', 'https://js.braintreegateway.com/web/3.20.0/js/client.min.js', array(), null, true );
-		wp_enqueue_script( 'ppbthosted', 'https://js.braintreegateway.com/web/3.20.0/js/hosted-fields.min.js', array(), null, true );
-		wp_enqueue_script( 'ppbtppcheckout', 'https://js.braintreegateway.com/web/3.20.0/js/paypal-checkout.min.js', array(), null, true );
-		wp_enqueue_script( 'ppbtppapi', 'https://www.paypalobjects.com/api/checkout.js', array(), null, true );
-		wp_enqueue_script( 'ppbtthreeds', 'https://js.braintreegateway.com/web/3.20.0/js/three-d-secure.min.js', array(), null, true );
-		wp_enqueue_script( 'ppbtdata', 'https://js.braintreegateway.com/web/3.20.0/js/data-collector.min.js', array(), null, true );
 	}
 
 	public static function add_css() {

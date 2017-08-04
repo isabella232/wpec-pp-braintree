@@ -55,7 +55,7 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 	public function process() {
 		global $braintree_settings;
 
-		self::setBraintreeConfiguration();
+		WPEC_Btree_Helpers::setBraintreeConfiguration();
 
 		$paymentAmount = $this->cart_data['total_price'];
 
@@ -89,7 +89,7 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 		}
 
 		//Submit using $gateway(for auth users)
-		if ( self::bt_auth_can_connect() && self::bt_auth_is_connected() ) {
+		if ( WPEC_Btree_Helpers::bt_auth_can_connect() && WPEC_Btree_Helpers::bt_auth_is_connected() ) {
 			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
 
 			$gateway = new Braintree_Gateway( array(

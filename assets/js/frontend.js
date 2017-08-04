@@ -1,4 +1,4 @@
-/*global jQuery */
+/*global jQuery, wpec_ppbt */
 (function($) {
 	var clientToken = wpec_ppbt.ctoken;
 	var errmsg = '';
@@ -15,7 +15,7 @@
 	var modal = $('#pp-btree-hosted-fields-modal');
 	var bankFrame = $('.pp-btree-hosted-fields-bt-modal-body');
 	var closeFrame = $('#pp-btree-hosted-fields-text-close');
-	var cart_form = $('#wpsc-checkout-form, .wpsc_checkout_forms' );
+	var cart_form = $( '#wpsc-checkout-form, .wpsc_checkout_forms' );
 	var submit_btn = $('.wpsc-checkout-form-button, .wpsc_buy_button');
 	var paypalButton = $('#pp_braintree_pp_button');
 	var nonceElement = $('#pp_btree_method_nonce, #wpsc-checkout-form-pp_btree_method_nonce');
@@ -89,7 +89,7 @@
 			}
 			components.hostedFields = hostedFieldsInstance;
 			submit_btn.attr('disabled', false);
-			cart_form.on('submit', function (event) {
+			cart_form.on( 'submit', function (event) {
 				if ( gateway !== 'braintree-credit-cards' ) { return; }
 				event.preventDefault();
 				components.hostedFields.tokenize(function (tokenizeErr, payload) {
@@ -153,13 +153,13 @@
 									if (liabilityShifted) {
 										// The 3D Secure payment was successful so proceed with this nonce
 										nonceElement.value = response.nonce;
-										cart_form.submit();
+										cart_form[0].submit();
 									} else {
 										// The 3D Secure payment failed an initial check so check whether liability shift is possible
 										if (liabilityShiftPossible) {
 											// LiabilityShift is possible so proceed with this nonce
 											nonceElement.value = response.nonce;
-											cart_form.submit();
+											cart_form[0].submit();
 										} else {
 											if ( wpec_ppbt.t3dsonly == 'on' ) {
 												// Check whether the 3D Secure check has to be passed to proceeed. If so then show an error
@@ -169,13 +169,13 @@
 											} else {
 												// ...and if not just proceed with this nonce
 												nonceElement.value = response.nonce;
-												cart_form.submit();
+												cart_form[0].submit();
 											}
 										}
 									}
 									// 3D Secure finished. Using response.nonce you may proceed with the transaction with the associated server side parameters below.
 									nonceElement.value = response.nonce;
-									cart_form.submit();
+									cart_form[0].submit();
 								} else {
 									// Handle errors
 									console.log('verification error:', err);
@@ -185,10 +185,10 @@
 						} else {
 							// send the nonce to your server.
 							nonceElement.value = payload.nonce;
-							cart_form.submit();
+							cart_form[0].submit();
 						}
 				});
-			}, false);
+			});
 		});
 	};
 
@@ -202,7 +202,7 @@
 			  return;
 			}
 			components.paypalCheckout = paypalCheckoutInstance;
-			//paypalButton.attr('disabled', false);
+			paypalButton.attr('disabled', false);
 			// Set up PayPal with the checkout.js library
 			paypal.Button.render({
 				env: wpec_ppbt.sandbox,
@@ -245,9 +245,9 @@
 				return components.paypalCheckout.tokenizePayment(data)
 				  .then(function (payload) {
 					// Submit `payload.nonce` to your server
-					//paypalButton.attr('disabled', true);
+					paypalButton.attr('disabled', true);
 					nonceElement.value = payload.nonce;
-					cart_form.submit();
+					cart_form[0].submit();
 				  });
 			  },
 			  onCancel: function (data) {
@@ -256,7 +256,7 @@
 			  onError: function (err) {
 				console.error('checkout.js error', err);
 			  }
-			}, document.getElementById( 'pp_braintree_pp_button' )).then(function () {
+			}, document.getElementById( 'pp_braintree_pp_button' ) ).then(function () {
 			  // The PayPal button will be rendered in an html element with the id
 			  // `paypal-button`. This function will be called when the PayPal button
 			  // is set up and ready to be used.
@@ -322,11 +322,12 @@
 
 	function wpscCheckSubmitStatus( e ) {
 		var pp_button = $( '.wpsc-checkout-form-button, .wpsc_buy_button' );
-		gateway = $( 'input[name="custom_gateway"]:checked, .wpsc-field-wpsc_payment_method input:checked' ).val();
+		gateway = $( 'input[name="custom_gateway"]:checked, input[name="wpsc_payment_method"]:checked' ).val();
 
 		if ( gateway == 'braintree-paypal' ) {
 			if ( e && e.keyCode == 13 ) {
 				e.preventDefault();
+				return;
 			}
 
 			if ( pp_button.is(":visible") ) {
@@ -341,10 +342,6 @@
 	function wpscBootstrapBraintree() {
 		//Disable the regular purchase button if using PayPal
 		wpscCheckSubmitStatus();
-
-		if ( gateway !== 'braintree-credit-cards' && gateway !== 'braintree-paypal' ) {
-			return;
-		}
 
 		if ( components.client ) {
 			return;
@@ -372,7 +369,7 @@
 			// to your server, e.g. by injecting it into your form as a hidden input.
 			components.kount = dataCollectorInstance.deviceData;
 			
-			document.getElementById('pp_btree_card_kount').value = components.kount;
+			$('#pp_btree_card_kount').val( components.kount );
 		  });
 
 		  if ( wpec_ppbt.is_cc_active ) {
@@ -395,4 +392,5 @@
 	$( document ).on( 'keypress', '#wpsc-checkout-form', wpscCheckSubmitStatus );
 	$( 'input[name=\"custom_gateway\"]' ).change( wpscBootstrapBraintree );
 	$( 'input[name=\"wpsc_payment_method\"]' ).change( wpscBootstrapBraintree );
+
 } )( jQuery );
