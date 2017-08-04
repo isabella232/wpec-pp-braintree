@@ -14,7 +14,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 		parent::init();
 		
 		// Tev1 fields
-		add_action( 'wpsc_tev1_default_credit_card_form_fields', array( $this, 'tev1_checkout_fields'), 90, 2 );
+		add_action( 'wpsc_tev1_default_credit_card_form_fields', array( $this, 'tev1_checkout_fields'), 99, 2 );
 		add_action( 'wpsc_tev1_default_credit_card_form_end', array( $this, 'tev1_checkout_fields_extra') );
 		// Tev2 fields
 		add_filter( 'wpsc_default_credit_card_form_fields', array( $this, 'tev2_checkout_fields' ), 99, 2 );
