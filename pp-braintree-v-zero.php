@@ -604,5 +604,18 @@ class WPEC_Btree_Helpers {
 		wp_safe_redirect( add_query_arg( 'wpec_braintree_disconnected', true, admin_url( 'options-general.php?page=wpsc-settings&tab=gateway' ) ) );
 		exit;		
 	}
+	
+	public static function set_payment_error_message( $error ) {
+		if ( wpsc_is_theme_engine( '1.0' ) ) {
+			$messages = wpsc_get_customer_meta( 'checkout_misc_error_messages' );
+			if ( ! is_array( $messages ) ) {
+				$messages = array();
+			}
+			$messages[] = $error;
+			wpsc_update_customer_meta( 'checkout_misc_error_messages', $messages );
+		} else {
+			WPSC_Message_Collection::get_instance()->add( $error, 'error', 'main', 'flash' );
+		}
+	}
 }
 add_action( 'wpsc_pre_load', 'WPEC_Btree_Helpers::get_instance' );

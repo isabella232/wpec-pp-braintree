@@ -16,22 +16,17 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 		parent::init();
 
 		// Tev1 fields
-		add_filter( 'wpsc_tev1_default_credit_card_form_fields', array( $this, 'tev1_checkout_fields'), 90, 2 );
+		add_filter( 'wpsc_tev1_default_credit_card_form_fields_braintree-paypal', array( $this, 'tev1_checkout_fields'), 10, 2 );
 		// Tev2 fields
-		add_filter( 'wpsc_default_credit_card_form_fields', array( $this, 'tev2_checkout_fields' ), 90, 2 );
+		add_filter( 'wpsc_default_credit_card_form_fields_braintree-paypal', array( $this, 'tev2_checkout_fields' ), 10, 2 );
 	}
 
 	public function tev2_checkout_fields( $fields, $name ) {
 		$fields = array();
-		$gat_name = str_replace( '_', '-', $this->setting->gateway_name );
-
-		if ( $name != $gat_name ) {
-			return $fields;
-		}
 
 		$fields = array(
 			'bt-pp-button' => '<p class="wpsc-form-row wpsc-form-row-wide wpsc-bt-pp-but-field">
-				<label for="' . esc_attr( $gat_name ) . '-bt-pp-but">' . __( 'Click below to continue to PayPal', 'wp-e-commerce' ) . '</label>
+				<label for="' . esc_attr( $name ) . '-bt-pp-but">' . __( 'Click below to continue to PayPal', 'wp-e-commerce' ) . '</label>
 				<div id="pp_braintree_pp_button"></div>
 			</p>'
 		);
@@ -41,15 +36,10 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 
 	public function tev1_checkout_fields( $fields, $name ) {
 		$fields = array();
-		$gat_name = str_replace( '_', '-', $this->setting->gateway_name );
-
-		if ( $name != $gat_name ) {
-			return $fields;
-		}
 
 		$fields = array(
 			'bt-pp-button' => '<tr><td><p class="wpsc-form-row wpsc-form-row-wide wpsc-bt-pp-but-field">
-				<label for="' . esc_attr( $gat_name ) . '-bt-pp-but">' . __( 'Click below to continue to PayPal', 'wp-e-commerce' ) . '</label></td></tr>
+				<label for="' . esc_attr( $name ) . '-bt-pp-but">' . __( 'Click below to continue to PayPal', 'wp-e-commerce' ) . '</label></td></tr>
 				<tr><td><div id="pp_braintree_pp_button"></div></td></tr>'
 		);
 
@@ -66,36 +56,7 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 
 		WPEC_Btree_Helpers::setBraintreeConfiguration();
 
-		$paymentAmount = $this->cart_data['total_price'];
-
-		$session_id = $this->cart_data['session_id'];
-		$email_address = $this->cart_data['email_address'];
-		$billing_address = $this->cart_data['billing_address'];
-
-		$is_same_billing_address = false;
-
-		// Check if opted to use billing address for shipping and
-		// handle accordingly
-		if ( isset( $_POST['shippingSameBilling'] ) ) {
-			if ( $_POST['shippingSameBilling'] == true ) {
-				$is_same_billing_address = true;
-			}
-		}
-
-		if ( $is_same_billing_address == true ) {
-			$shipping_address = $this->cart_data['shipping_address'];
-		} else {
-			$shipping_address = $this->cart_data['billing_address'];
-		}
-
 		$payment_method_nonce = $_POST['pp_btree_method_nonce'];
-
-		//echo "DEBUG :: "."payment_method_nonce = ".$payment_method_nonce."<br />";
-		if ($braintree_settings['settlement_type'] == 'upfront') {
-			$submit_for_settlement = true;
-		} else {
-			$submit_for_settlement = false;
-		}
 
 		//Submit using $gateway(for auth users)
 		if ( WPEC_Btree_Helpers::bt_auth_can_connect() && WPEC_Btree_Helpers::bt_auth_is_connected() ) {
@@ -106,64 +67,63 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 			));
 
 			$result = $gateway->transaction()->sale([
-				"amount" => $paymentAmount,
+				"amount" => $order->get('totalprice'),
 				"paymentMethodNonce" => $payment_method_nonce,
 				"channel" => "WPec_Cart_PPpbBT",
-				"orderId" => $session_id,
+				"orderId" => $order->get('id'),
 				"customer" => [
-					"firstName" => $billing_address['first_name'],
-					"lastName" => $billing_address['last_name'],
-					"phone" => $billing_address['phone'],
-					"email" => $email_address
+					"firstName" => $this->checkout_data->get('billingfirstname'),
+					"lastName" => $this->checkout_data->get('billinglastname'),
+					"phone" => isset( $phone_field ) ? $phone_field : '',
+					"email" => $this->checkout_data->get('billingemail')
 				],
 				"billing" => [
-					"firstName" => $billing_address['first_name'],
-					"lastName" => $billing_address['last_name'],
-					"streetAddress" => $billing_address['address'],
-					"locality" => $billing_address['city'],
+					"firstName" => $this->checkout_data->get('billingfirstname'),
+					"lastName" => $this->checkout_data->get('billinglastname'),
+					"streetAddress" => $this->checkout_data->get('billingaddress'),
+					"locality" => $this->checkout_data->get('billingcity'),
 					"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.billing_region' ), 'code' ),
-					"postalCode" => $billing_address['post_code'],
-					"countryCodeAlpha2" => $billing_address['country']
+					"postalCode" => $this->checkout_data->get('billingpostcode'),
+					"countryCodeAlpha2" => $this->checkout_data->get('billingcountry')
 				],
 				"shipping" => [
-					"firstName" => $shipping_address['first_name'],
-					"lastName" => $shipping_address['last_name'],
-					"streetAddress" => $shipping_address['address'],
-					"locality" => $shipping_address['city'],
+					"firstName" => $this->checkout_data->get('shippingfirstname'),
+					"lastName" => $this->checkout_data->get('shippinglastname'),
+					"streetAddress" => $this->checkout_data->get('shippingaddress'),
+					"locality" => $this->checkout_data->get('shippingcity'),
 					"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.delivery_region' ), 'code' ),
-					"postalCode" => $shipping_address['post_code'],
-					"countryCodeAlpha2" => $shipping_address['country']
-				],				
+					"postalCode" => $this->checkout_data->get('shippingpostcode'),
+					"countryCodeAlpha2" => $this->checkout_data->get('shippingcountry')
+				],
 				"options" => [
-				  "submitForSettlement" => $submit_for_settlement,
+				  "submitForSettlement" => true,
 				]
 			]);
 			
 			// In theory all error handling should be done on the client side...?
-			if ($result->success) {
+			if ( $result->success ) {
 				// Payment complete
-				wpsc_update_purchase_log_details( $session_id, array( 'processed' => WPSC_Purchase_Log::ACCEPTED_PAYMENT, 'transactid' => $result->transaction->id ), 'sessionid' );
-
-				$this->go_to_transaction_results( $session_id );
+				$order->set( 'processed', $order_status )->save();
+				$order->set( 'transactid', $result->transaction->id )->save();
+				$this->go_to_transaction_results();
 			} else {
-				if ($result->transaction) {
-					wpsc_update_purchase_log_details( $session_id, array( 'processed' => WPSC_Purchase_Log::ORDER_RECEIVED, 'transactid' => $result->transaction->id ), 'sessionid' );
-
-					$this->go_to_transaction_results( $session_id );
+				if ( $result->transaction ) {
+					$order->set( 'processed', WPSC_Purchase_Log::INCOMPLETE_SALE )->save();
+					WPEC_Btree_Helpers::set_payment_error_message( $result->transaction->processorResponseText );
+					wp_safe_redirect( $this->get_shopping_cart_payment_url() );
 				} else {
-					$error = $result->message;
+					$error = "Payment Error: " . $result->message;
 
-					$this->set_error_message( "Payment Error: ".$error );
-
-					$this->return_to_checkout();
+					WPEC_Btree_Helpers::set_payment_error_message( $error );
+					wp_safe_redirect( $this->get_shopping_cart_payment_url() );
 				}
 			}
 		}
 
 		// Create a sale transaction with Braintree
 		$result = Braintree_Transaction::sale(array(
-			"amount" => $paymentAmount,
-			"orderId" => $session_id,
+			"amount" => $order->get('totalprice'),
+			"orderId" => $order->get('id'),
 			"paymentMethodNonce" => $payment_method_nonce,
 			"customer" => [
 				"firstName" => $billing_address['first_name'],
@@ -172,47 +132,46 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 				"email" => $email_address
 			],
 			"billing" => [
-				"firstName" => $billing_address['first_name'],
-				"lastName" => $billing_address['last_name'],
-				"streetAddress" => $billing_address['address'],
-				"locality" => $billing_address['city'],
+				"firstName" => $this->checkout_data->get('billingfirstname'),
+				"lastName" => $this->checkout_data->get('billinglastname'),
+				"streetAddress" => $this->checkout_data->get('billingaddress'),
+				"locality" => $this->checkout_data->get('billingcity'),
 				"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.billing_region' ), 'code' ),
-				"postalCode" => $billing_address['post_code'],
-				"countryCodeAlpha2" => $billing_address['country']
+				"postalCode" => $this->checkout_data->get('billingpostcode'),
+				"countryCodeAlpha2" => $this->checkout_data->get('billingcountry')
 			],
 			"shipping" => [
-				"firstName" => $shipping_address['first_name'],
-				"lastName" => $shipping_address['last_name'],
-				"streetAddress" => $shipping_address['address'],
-				"locality" => $shipping_address['city'],
+				"firstName" => $this->checkout_data->get('shippingfirstname'),
+				"lastName" => $this->checkout_data->get('shippinglastname'),
+				"streetAddress" => $this->checkout_data->get('shippingaddress'),
+				"locality" => $this->checkout_data->get('shippingcity'),
 				"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.delivery_region' ), 'code' ),
-				"postalCode" => $shipping_address['post_code'],
-				"countryCodeAlpha2" => $shipping_address['country']
+				"postalCode" => $this->checkout_data->get('shippingpostcode'),
+				"countryCodeAlpha2" => $this->checkout_data->get('shippingcountry')
 			],
 			"options" => [
-				"submitForSettlement" => $submit_for_settlement,
+			  "submitForSettlement" => true,
 			]
 		));
 
-		// In theory all error handling should be done on the client side...?
-		if ($result->success) {
-			// Payment complete
-			wpsc_update_purchase_log_details( $session_id, array( 'processed' => WPSC_Purchase_Log::ACCEPTED_PAYMENT, 'transactid' => $result->transaction->id ), 'sessionid' );
-
-	 		$this->go_to_transaction_results( $session_id );
-		} else {
-			if ($result->transaction) {
-				wpsc_update_purchase_log_details( $session_id, array( 'processed' => WPSC_Purchase_Log::ORDER_RECEIVED, 'transactid' => $result->transaction->id ), 'sessionid' );
-
-	 			$this->go_to_transaction_results( $session_id );
+			// In theory all error handling should be done on the client side...?
+			if ( $result->success ) {
+				// Payment complete
+				$order->set( 'processed', $order_status )->save();
+				$order->set( 'transactid', $result->transaction->id )->save();
+				$this->go_to_transaction_results();
 			} else {
-				$error = $result->message;
+				if ( $result->transaction ) {
+					$order->set( 'processed', WPSC_Purchase_Log::INCOMPLETE_SALE )->save();
+					WPEC_Btree_Helpers::set_payment_error_message( $result->transaction->processorResponseText );
+					wp_safe_redirect( $this->get_shopping_cart_payment_url() );
+				} else {
+					$error = "Payment Error: " . $result->message;
 
-				$this->set_error_message( "Payment Error: ".$error );
-
-				$this->return_to_checkout();
+					WPEC_Btree_Helpers::set_payment_error_message( $error );
+					wp_safe_redirect( $this->get_shopping_cart_payment_url() );
+				}
 			}
-		}
 
 	 	exit();
 	}
@@ -311,5 +270,17 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 			</td>
 		</tr>		
 	<?php
+	}
+
+	/**
+	 * Returns the HTML of the logo of the payment gateway.
+	 *
+	 * @access public
+	 * @return string
+	 *
+	 * @since 3.9.0
+	 */
+	public function get_image_url() {
+		return apply_filters( 'wpsc_braintree-paypal_mark_html', 'https://www.paypalobjects.com/webstatic/en_US/i/buttons/PP_logo_h_200x51.png' );
 	}
 }

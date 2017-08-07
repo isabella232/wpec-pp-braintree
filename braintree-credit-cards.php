@@ -4,6 +4,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 	public function __construct() {
 		parent::__construct();
 		$this->title            = __( 'PayPal powered by Braintree - Cards', 'wpsc_authorize_net' );
+		$this->image            = WPSC_URL . '/images/cc.gif';
 		$this->supports         = array( 'default_credit_card_form', 'tokenization', 'tev1' );
 		$this->sandbox          = $this->setting->get( 'sandbox' ) == '1' ? true : false;
 		$this->payment_capture 	= $this->setting->get( 'payment_capture' ) !== null ? $this->setting->get( 'payment_capture' ) : 'standard';
@@ -12,23 +13,18 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 
 	public function init() {
 		parent::init();
-		
+
 		// Tev1 fields
-		add_action( 'wpsc_tev1_default_credit_card_form_fields', array( $this, 'tev1_checkout_fields'), 99, 2 );
-		add_action( 'wpsc_tev1_default_credit_card_form_end', array( $this, 'tev1_checkout_fields_extra') );
+		add_action( 'wpsc_tev1_default_credit_card_form_fields_braintree-credit-cards', array( $this, 'tev1_checkout_fields'), 10, 2 );
+		add_action( 'wpsc_tev1_default_credit_card_form_end_braintree-credit-cards', array( $this, 'tev1_checkout_fields_extra') );
 		// Tev2 fields
-		add_filter( 'wpsc_default_credit_card_form_fields', array( $this, 'tev2_checkout_fields' ), 99, 2 );
-		add_action( 'wpsc_default_credit_card_form_end', array( $this, 'tev2_checkout_fields_extra' ) );
+		add_filter( 'wpsc_default_credit_card_form_fields_braintree-credit-cards', array( $this, 'tev2_checkout_fields' ), 10, 2 );
+		add_action( 'wpsc_default_credit_card_form_end_braintree-credit-cards', array( $this, 'tev2_checkout_fields_extra' ) );
 	}
 
 	public function tev2_checkout_fields( $fields, $name ) {
-		$gat_name = str_replace( '_', '-', $this->setting->gateway_name );
-
-		if ( $name != $gat_name ) {
-			return $fields;
-		}
-
 		unset($fields['card-name-field']);
+
 		$fields['card-number-field'] = '<p class="wpsc-form-row wpsc-form-row-wide wpsc-cc-field">
 				<label for="' . esc_attr( $name ) . '-card-number">' . __( 'Card Number', 'wp-e-commerce' ) . ' <span class="required">*</span></label>
 				<div id="braintree-credit-cards-card-number" class="bt-hosted-field"></div>
@@ -46,12 +42,6 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 	}
 
 	public function tev2_checkout_fields_extra( $name ) {
-		$gat_name = str_replace( '_', '-', $this->setting->gateway_name );
-
-		if ( $name != $gat_name ) {
-			return;
-		}
-
 		echo '<div id="pp-btree-hosted-fields-modal" class="pp-btree-hosted-fields-modal-hidden" tabindex="-1">
 				<div class="pp-btree-hosted-fields-bt-mask"></div>
 					<div class="pp-btree-hosted-fields-bt-modal-frame">
@@ -65,11 +55,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 	}
 
 	public function tev1_checkout_fields( $fields, $name ) {
-		$gat_name = str_replace( '_', '-', $this->setting->gateway_name );
-
-		if ( $name != $gat_name ) {
-			return $fields;
-		}
+		unset($fields['card-name-field']);
 
 		$fields['card-number-field'] = '<tr><td class="wpsc-form-row wpsc-form-row-wide wpsc-cc-field">
 					<label for="' . esc_attr( $name ) . '-card-number">' . __( 'Card Number', 'wp-e-commerce' ) . ' <span class="required">*</span></label></td>
@@ -88,12 +74,6 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 	}
 	
 	public function tev1_checkout_fields_extra( $name ) {
-		$gat_name = str_replace( '_', '-', $this->setting->gateway_name );
-
-		if ( $name != $gat_name ) {
-			return;
-		}
-		
 		$output = '';
 
 		$output .= '
@@ -110,11 +90,233 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 
 		echo $output;		
 	}
-	
+
 	public function process() {
+		global $braintree_settings;
+
+		WPEC_Btree_Helpers::setBraintreeConfiguration();
+
+		$order = $this->purchase_log;
+		$purchase_log = new WPSC_Purchase_Log( $order->get('sessionid'), 'sessionid' );
+
+		$payment_method_nonce = $_POST['pp_btree_method_nonce'];
+		$kount_fraud = isset( $_POST['pp_btree_card_kount'] ) ? strip_tags( trim ( $_POST['pp_btree_card_kount'] ) ) : '';
+
+		if ( $this->setting->get( 'settlement' ) == 'upfront' ) {
+			$submit_for_settlement = true;
+		} else {
+			$submit_for_settlement = false;
+		}
+
+		$order_status = $submit_for_settlement === true ? WPSC_Purchase_Log::ACCEPTED_PAYMENT : WPSC_Purchase_Log::ORDER_RECEIVED;
+
+		// Check 3DS transaction.
+		$threedcheck = true;
+		$braintree_threedee_secure = $this->setting->get('three_d_secure');
+		$force3ds = false;
+		if ( '1' == $braintree_threedee_secure ) {
+			$force3ds = true;
+			$threedcheck = $this->check_3ds_risk_transaction( $payment_method_nonce );
+		}
+
+		if ( ! $threedcheck ) {
+			// 3DS check failed so return;
+			$error = '3D Secure verification failed!';
+			$order->set( 'processed', WPSC_Purchase_Log::INCOMPLETE_SALE )->save();
+			$log->add_note( $error );
+			WPEC_Btree_Helpers::set_payment_error_message( $error );
+			wp_safe_redirect( $this->get_shopping_cart_payment_url() );
+		}
+
+		$phone_field = $this->checkout_data->get('billingphone');
+
+		//Submit using $gateway(for auth users)
+		if ( WPEC_Btree_Helpers::bt_auth_can_connect() && WPEC_Btree_Helpers::bt_auth_is_connected() ) {
+			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
+
+			$gateway = new Braintree_Gateway( array(
+				'accessToken' => $acc_token,
+			));
+
+			$result = $gateway->transaction()->sale([
+				"amount" => $order->get('totalprice'),
+				"paymentMethodNonce" => $payment_method_nonce,
+				"channel" => "WPec_Cart_PPpbBT",
+				"orderId" => $order->get('id'),
+				"customer" => [
+					"firstName" => $this->checkout_data->get('billingfirstname'),
+					"lastName" => $this->checkout_data->get('billinglastname'),
+					"phone" => isset( $phone_field ) ? $phone_field : '',
+					"email" => $this->checkout_data->get('billingemail')
+				],
+				"billing" => [
+					"firstName" => $this->checkout_data->get('billingfirstname'),
+					"lastName" => $this->checkout_data->get('billinglastname'),
+					"streetAddress" => $this->checkout_data->get('billingaddress'),
+					"locality" => $this->checkout_data->get('billingcity'),
+					"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.billing_region' ), 'code' ),
+					"postalCode" => $this->checkout_data->get('billingpostcode'),
+					"countryCodeAlpha2" => $this->checkout_data->get('billingcountry')
+				],
+				"shipping" => [
+					"firstName" => $this->checkout_data->get('shippingfirstname'),
+					"lastName" => $this->checkout_data->get('shippinglastname'),
+					"streetAddress" => $this->checkout_data->get('shippingaddress'),
+					"locality" => $this->checkout_data->get('shippingcity'),
+					"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.delivery_region' ), 'code' ),
+					"postalCode" => $this->checkout_data->get('shippingpostcode'),
+					"countryCodeAlpha2" => $this->checkout_data->get('shippingcountry')
+				],				
+				"options" => [
+					"submitForSettlement" => $submit_for_settlement,
+					"threeDSecure" => [
+						"required" => $force3ds,
+					]
+				],
+				"deviceData" => $kount_fraud,
+			]);
 		
+			// In theory all error handling should be done on the client side...?
+			if ( $result->success ) {
+				// Payment complete
+				$order->set( 'processed', $order_status )->save();
+				$order->set( 'transactid', $result->transaction->id )->save();
+				$this->go_to_transaction_results();
+			} else {
+				if ( $result->transaction ) {
+					$order->set( 'processed', WPSC_Purchase_Log::INCOMPLETE_SALE )->save();
+					WPEC_Btree_Helpers::set_payment_error_message( $result->transaction->processorResponseText );
+					wp_safe_redirect( $this->get_shopping_cart_payment_url() );
+				} else {
+					$error = "Payment Error: " . $result->message;
+
+					WPEC_Btree_Helpers::set_payment_error_message( $error );
+					wp_safe_redirect( $this->get_shopping_cart_payment_url() );
+				}
+			}
+			exit;
+		}
+
+		// Create a sale transaction with Braintree
+		$result = Braintree_Transaction::sale(array(
+			"amount" => $order->get('totalprice'),
+			"orderId" => $order->get('id'),
+			"paymentMethodNonce" => $payment_method_nonce,
+			"customer" => [
+				"firstName" => $this->checkout_data->get('billingfirstname'),
+				"lastName" => $this->checkout_data->get('billinglastname'),
+				"phone" => isset( $phone_field ) ? $phone_field : '',
+				"email" => $this->checkout_data->get('billingemail')
+			],
+			"billing" => [
+				"firstName" => $this->checkout_data->get('billingfirstname'),
+				"lastName" => $this->checkout_data->get('billinglastname'),
+				"streetAddress" => $this->checkout_data->get('billingaddress'),
+				"locality" => $this->checkout_data->get('billingcity'),
+				"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.billing_region' ), 'code' ),
+				"postalCode" => $this->checkout_data->get('billingpostcode'),
+				"countryCodeAlpha2" => $this->checkout_data->get('billingcountry')
+			],
+			"shipping" => [
+				"firstName" => $this->checkout_data->get('shippingfirstname'),
+				"lastName" => $this->checkout_data->get('shippinglastname'),
+				"streetAddress" => $this->checkout_data->get('shippingaddress'),
+				"locality" => $this->checkout_data->get('shippingcity'),
+				"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.delivery_region' ), 'code' ),
+				"postalCode" => $this->checkout_data->get('shippingpostcode'),
+				"countryCodeAlpha2" => $this->checkout_data->get('shippingcountry')
+			],
+			"options" => [
+				"submitForSettlement" => $submit_for_settlement,
+				"threeDSecure" => [
+					"required" => $force3ds
+				]
+			]
+		));
+
+		// In theory all error handling should be done on the client side...?
+		if ( $result->success ) {
+			// Payment complete
+			$order->set( 'processed', $order_status )->save();
+			$order->set( 'transactid', $result->transaction->id )->save();
+			$this->go_to_transaction_results();
+		} else {
+			if ( $result->transaction ) {
+				$order->set( 'processed', WPSC_Purchase_Log::INCOMPLETE_SALE )->save();
+				WPEC_Btree_Helpers::set_payment_error_message( $result->transaction->processorResponseText );
+				wp_safe_redirect( $this->get_shopping_cart_payment_url() );
+			} else {
+				$error = "Payment Error: " . $result->message;
+
+				WPEC_Btree_Helpers::set_payment_error_message( $error );
+				wp_safe_redirect( $this->get_shopping_cart_payment_url() );
+			}
+		}
+		exit;	
 	}
-	
+
+	public function check_3ds_risk_transaction( $nonce ) {
+		$pp_3ds_risk = $this->setting->get( 'three_d_secure_risk' ) != false ? $this->setting->get( 'three_d_secure_risk' ) : 'standard' ;
+		$auth_3ds = false;
+
+		if ( WPEC_Btree_Helpers::bt_auth_can_connect() && WPEC_Btree_Helpers::bt_auth_is_connected() ) {
+			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
+
+			$gateway = new Braintree_Gateway( array(
+				'accessToken' => $acc_token,
+			));
+
+			$auth_3ds = true;
+		}
+
+		try {
+			$paymentMethodNonce = $auth_3ds ? $gateway->PaymentMethodNonce()->find( $nonce ) : Braintree_PaymentMethodNonce::find( $nonce );
+		} catch (Braintree_Exception_NotFound $e) {
+			echo 'Caught exception: ',  $e->getMessage(), "\n";
+			exit;
+		}
+
+		$info = $paymentMethodNonce->threeDSecureInfo;
+
+		if ( empty( $info ) ) {
+			return true;
+		}
+
+		// Level should be 'strict' or 'standard'
+		$level = $pp_3ds_risk;
+
+		$matrix  = array(
+			'standard' => array(
+				'unsupported_card' => true,
+				'lookup_error'     => true,
+				'lookup_enrolled'  => true,
+				'authenticate_successful_issuer_not_participating' => true,
+				'authentication_unavailable'  => true,
+				'authenticate_signature_verification_failed'  => false,
+				'authenticate_successful'  => true,
+				'authenticate_attempt_successful'  => true,
+				'authenticate_failed'  => false,
+				'authenticate_unable_to_authenticate'  => true,
+				'authenticate_error'  => true,
+			),
+			'strict' => array(
+				'unsupported_card' => false,
+				'lookup_error'     => false,
+				'lookup_enrolled'  => true,
+				'authenticate_successful_issuer_not_participating' => true,
+				'authentication_unavailable'  => false,
+				'authenticate_signature_verification_failed'  => false,
+				'authenticate_successful'  => true,
+				'authenticate_attempt_successful'  => true,
+				'authenticate_failed'  => false,
+				'authenticate_unable_to_authenticate'  => false,
+				'authenticate_error'  => false,
+			)
+		);
+
+		return apply_filters( 'wpec_braintree_3ds_pass_or_fail', $matrix[ $level ][ $info->status ], $level );
+	}
+
 	public function setup_form() {
 		echo WPEC_Btree_Helpers::show_connect_button();
 	?>
@@ -151,8 +353,8 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 			</td>
 			<td>
 				<select id="wpsc-worldpay-payment-capture" name="<?php echo esc_attr( $this->setting->get_field_name( 'settlement' ) ); ?>">
-					<option value='upfront' <?php selected( 'upfront', $this->setting->get( 'settlement' ) ); ?>><?php _e( 'Upfront Settlement.', 'wpec-square' )?></option>
-					<option value='deferred' <?php selected( 'deferred', $this->setting->get( 'settlement' ) ); ?>><?php _e( 'Deferred Settlement.', 'wpec-square' )?></option>
+					<option value='upfront' <?php selected( 'upfront', $this->setting->get( 'settlement' ) ); ?>><?php _e( 'Upfront Settlement', 'wpec-square' )?></option>
+					<option value='deferred' <?php selected( 'deferred', $this->setting->get( 'settlement' ) ); ?>><?php _e( 'Deferred Settlement', 'wpec-square' )?></option>
 				</select>
 			</td>
 		</tr>
@@ -186,8 +388,8 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 			</td>
 			<td>
 				<select id="wpsc-worldpay-payment-capture" name="<?php echo esc_attr( $this->setting->get_field_name( 'three_d_secure_risk' ) ); ?>">
-					<option value='standard' <?php selected( 'standard', $this->setting->get( 'three_d_secure_risk' ) ); ?>><?php _e( 'Authorize and capture the payment when the order is placed.', 'wpec-square' )?></option>
-					<option value='strict' <?php selected( 'strict', $this->setting->get( 'three_d_secure_risk' ) ); ?>><?php _e( 'Authorize the payment when the order is placed.', 'wpec-square' )?></option>
+					<option value='standard' <?php selected( 'standard', $this->setting->get( 'three_d_secure_risk' ) ); ?>><?php _e( 'Standard', 'wpec-square' )?></option>
+					<option value='strict' <?php selected( 'strict', $this->setting->get( 'three_d_secure_risk' ) ); ?>><?php _e( 'Strict', 'wpec-square' )?></option>
 				</select>
 			</td>
 		</tr>
@@ -216,5 +418,9 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 			</td>
 		</tr>
 	<?php
+	}
+
+	public function get_image_url() {
+		return apply_filters( 'wpsc_braintree-credit-cards_logo', WPSC_URL . '/images/cc.gif' );
 	}
 }
