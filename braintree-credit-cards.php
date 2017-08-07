@@ -395,7 +395,11 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 			}
 
 			if ( $result->success ) {
-				$log->set( 'processed', WPSC_Purchase_Log::REFUNDED )->save();
+				
+				$current_refund = $log->get_total_refunded();
+
+				// Set a log meta entry, and save log before adding refund note.
+				$log->set( 'total_order_refunded' , $amount + $current_refund )->save();
 
 				return true;
 			} else {
