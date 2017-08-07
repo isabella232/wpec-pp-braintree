@@ -5,7 +5,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 		parent::__construct();
 		$this->title            = __( 'PayPal powered by Braintree - Cards', 'wpsc_authorize_net' );
 		$this->image            = WPSC_URL . '/images/cc.gif';
-		$this->supports         = array( 'default_credit_card_form', 'tokenization', 'tev1' );
+		$this->supports         = array( 'default_credit_card_form', 'tokenization', 'tev1', 'auth-capture', 'refunds' );
 		$this->sandbox          = $this->setting->get( 'sandbox' ) == '1' ? true : false;
 		$this->payment_capture 	= $this->setting->get( 'payment_capture' ) !== null ? $this->setting->get( 'payment_capture' ) : 'standard';
 		// Define user set variables
@@ -93,8 +93,6 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 
 	public function process() {
 		global $braintree_settings;
-
-		WPEC_Btree_Helpers::setBraintreeConfiguration();
 
 		$order = $this->purchase_log;
 		$purchase_log = new WPSC_Purchase_Log( $order->get('sessionid'), 'sessionid' );
@@ -198,6 +196,8 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 		}
 
 		// Create a sale transaction with Braintree
+		WPEC_Btree_Helpers::setBraintreeConfiguration();
+
 		$result = Braintree_Transaction::sale(array(
 			"amount" => $order->get('totalprice'),
 			"orderId" => $order->get('id'),
@@ -315,6 +315,94 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 		);
 
 		return apply_filters( 'wpec_braintree_3ds_pass_or_fail', $matrix[ $level ][ $info->status ], $level );
+	}
+
+	public function capture_payment( $log, $transaction_id ) {
+
+		if ( $log->get( 'gateway' ) == 'braintree-credit-cards' ) {
+
+			$transaction_id = $log->get( 'transactid' );
+			$log->get( 'totalprice' );
+
+			if ( WPEC_Btree_Helpers::bt_auth_can_connect() && WPEC_Btree_Helpers::bt_auth_is_connected() ) {
+				$acc_token = get_option( 'wpec_braintree_auth_access_token' );
+
+				$gateway = new Braintree_Gateway( array(
+					'accessToken' => $acc_token,
+				));
+				$result = $gateway->transaction()->submitForSettlement( $transaction_id );
+			} else {
+				WPEC_Btree_Helpers::setBraintreeConfiguration();
+				$result = Braintree_Transaction::submitForSettlement( $transaction_id );
+			}
+
+			if ( $result->success ) {
+				$log->set( 'processed', WPSC_Purchase_Log::ACCEPTED_PAYMENT )->save();
+
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return false;
+	}
+
+	public function process_refund( $log, $amount = 0.00, $reason = '', $manual = false ) {
+		if ( $log->get( 'gateway' ) == 'braintree-credit-cards' ) {
+
+			if ( 0.00 == $amount ) {
+				return new WP_Error( 'braintree_credit_cards_refund_error', __( 'Refund Error: You need to specify a refund amount.', 'wp-e-commerce' ) );
+			}
+
+			$log = wpsc_get_order( $log );
+
+			if ( ! $log->get( 'transactid' ) ) {
+				return new WP_Error( 'error', __( 'Refund Failed: No transaction ID', 'wp-e-commerce' ) );
+			}
+
+			$max_refund  = $log->get( 'totalprice' ) - $log->get_total_refunded();
+
+			if ( $amount && $max_refund < $amount || 0 > $amount ) {
+				throw new Exception( __( 'Invalid refund amount', 'wp-e-commerce' ) );
+			}
+
+			if ( $manual ) {
+				$current_refund = $log->get_total_refunded();
+
+				// Set a log meta entry, and save log before adding refund note.
+				$log->set( 'total_order_refunded' , $amount + $current_refund )->save();
+
+				$log->add_refund_note(
+					sprintf( __( 'Refunded %s via Manual Refund', 'wp-e-commerce' ), wpsc_currency_display( $amount ) ),
+					$reason
+				);
+
+				return true;
+			}
+
+			$transaction_id = $log->get( 'transactid' );
+
+			if ( WPEC_Btree_Helpers::bt_auth_can_connect() && WPEC_Btree_Helpers::bt_auth_is_connected() ) {
+				$acc_token = get_option( 'wpec_braintree_auth_access_token' );
+
+				$gateway = new Braintree_Gateway( array(
+					'accessToken' => $acc_token,
+				));
+				$result = $gateway->transaction()->refund( $transaction_id );
+			} else {
+				WPEC_Btree_Helpers::setBraintreeConfiguration();
+				$result = Braintree_Transaction::refund( $transaction_id );
+			}
+
+			if ( $result->success ) {
+				$log->set( 'processed', WPSC_Purchase_Log::REFUNDED )->save();
+
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return false;		
 	}
 
 	public function setup_form() {
