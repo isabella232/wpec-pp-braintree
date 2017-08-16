@@ -129,117 +129,68 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 
 		$phone_field = $this->checkout_data->get('billingphone');
 
-		//Submit using $gateway(for auth users)
-		if ( WPEC_Btree_Helpers::bt_auth_can_connect() && WPEC_Btree_Helpers::bt_auth_is_connected() ) {
-			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
+		$params = array(
+			'amount' => $order->get('totalprice'),
+			'channel' => 'WPec_Cart_PPpbBT',
+			'orderId' => $order->get('id'),
+			'paymentMethodNonce' => $payment_method_nonce,
+			'customer' => array(
+				'firstName' => $this->checkout_data->get('billingfirstname'),
+				'lastName' => $this->checkout_data->get('billinglastname'),
+				'phone' => isset( $phone_field ) ? $phone_field : '',
+				'email' => $this->checkout_data->get('billingemail'),
+			),
+			'billing' => array(
+				'firstName' => $this->checkout_data->get('billingfirstname'),
+				'lastName' => $this->checkout_data->get('billinglastname'),
+				'streetAddress' => $this->checkout_data->get('billingaddress'),
+				'locality' => $this->checkout_data->get('billingcity'),
+				'region' => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.billing_region' ), 'code' ),
+				'postalCode' => $this->checkout_data->get('billingpostcode'),
+				'countryCodeAlpha2' => $this->checkout_data->get('billingcountry'),
+			),
+			'shipping' => array(
+				'firstName' => $this->checkout_data->get('shippingfirstname'),
+				'lastName' => $this->checkout_data->get('shippinglastname'),
+				'streetAddress' => $this->checkout_data->get('shippingaddress'),
+				'locality' => $this->checkout_data->get('shippingcity'),
+				'region' => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.delivery_region' ), 'code' ),
+				'postalCode' => $this->checkout_data->get('shippingpostcode'),
+				'countryCodeAlpha2' => $this->checkout_data->get('shippingcountry'),
+			),
+			'options' => array(
+				'submitForSettlement' => $submit_for_settlement,
+				'threeDSecure' => array(
+					'required' => $force3ds,
+				),
+			),
+			'deviceData' => $kount_fraud,
+		);
 
+		if ( WPEC_Btree_Helpers::bt_auth_is_connected() ) {
+			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
 			$gateway = new Braintree_Gateway( array(
 				'accessToken' => $acc_token,
 			));
 
-			$result = $gateway->transaction()->sale([
-				"amount" => $order->get('totalprice'),
-				"paymentMethodNonce" => $payment_method_nonce,
-				"channel" => "WPec_Cart_PPpbBT",
-				"orderId" => $order->get('id'),
-				"customer" => [
-					"firstName" => $this->checkout_data->get('billingfirstname'),
-					"lastName" => $this->checkout_data->get('billinglastname'),
-					"phone" => isset( $phone_field ) ? $phone_field : '',
-					"email" => $this->checkout_data->get('billingemail')
-				],
-				"billing" => [
-					"firstName" => $this->checkout_data->get('billingfirstname'),
-					"lastName" => $this->checkout_data->get('billinglastname'),
-					"streetAddress" => $this->checkout_data->get('billingaddress'),
-					"locality" => $this->checkout_data->get('billingcity'),
-					"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.billing_region' ), 'code' ),
-					"postalCode" => $this->checkout_data->get('billingpostcode'),
-					"countryCodeAlpha2" => $this->checkout_data->get('billingcountry')
-				],
-				"shipping" => [
-					"firstName" => $this->checkout_data->get('shippingfirstname'),
-					"lastName" => $this->checkout_data->get('shippinglastname'),
-					"streetAddress" => $this->checkout_data->get('shippingaddress'),
-					"locality" => $this->checkout_data->get('shippingcity'),
-					"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.delivery_region' ), 'code' ),
-					"postalCode" => $this->checkout_data->get('shippingpostcode'),
-					"countryCodeAlpha2" => $this->checkout_data->get('shippingcountry')
-				],				
-				"options" => [
-					"submitForSettlement" => $submit_for_settlement,
-					"threeDSecure" => [
-						"required" => $force3ds,
-					]
-				],
-				"deviceData" => $kount_fraud,
-			]);
-		
-			// In theory all error handling should be done on the client side...?
-			if ( $result->success ) {
-				// Payment complete
-				$order->set( 'processed', $order_status )->save();
-				$order->set( 'transactid', $result->transaction->id )->save();
-				$this->go_to_transaction_results();
-			} else {
-				if ( $result->transaction ) {
-					$order->set( 'processed', WPSC_Purchase_Log::INCOMPLETE_SALE )->save();
-					WPEC_Btree_Helpers::set_payment_error_message( $result->transaction->processorResponseText );
-					wp_safe_redirect( $this->get_shopping_cart_payment_url() );
-				} else {
-					$error[] = "Payment Error: " . $result->message;
-
-					WPEC_Btree_Helpers::set_payment_error_message( $error );
-					wp_safe_redirect( $this->get_shopping_cart_payment_url() );
-				}
-			}
-			exit;
+			$result = $gateway->transaction()->sale( $params );
+		} else {
+			WPEC_Btree_Helpers::setBraintreeConfiguration();
+			$result = Braintree_Transaction::sale( $params );
 		}
-
-		// Create a sale transaction with Braintree
-		WPEC_Btree_Helpers::setBraintreeConfiguration();
-
-		$result = Braintree_Transaction::sale(array(
-			"amount" => $order->get('totalprice'),
-			"orderId" => $order->get('id'),
-			"paymentMethodNonce" => $payment_method_nonce,
-			"customer" => [
-				"firstName" => $this->checkout_data->get('billingfirstname'),
-				"lastName" => $this->checkout_data->get('billinglastname'),
-				"phone" => isset( $phone_field ) ? $phone_field : '',
-				"email" => $this->checkout_data->get('billingemail')
-			],
-			"billing" => [
-				"firstName" => $this->checkout_data->get('billingfirstname'),
-				"lastName" => $this->checkout_data->get('billinglastname'),
-				"streetAddress" => $this->checkout_data->get('billingaddress'),
-				"locality" => $this->checkout_data->get('billingcity'),
-				"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.billing_region' ), 'code' ),
-				"postalCode" => $this->checkout_data->get('billingpostcode'),
-				"countryCodeAlpha2" => $this->checkout_data->get('billingcountry')
-			],
-			"shipping" => [
-				"firstName" => $this->checkout_data->get('shippingfirstname'),
-				"lastName" => $this->checkout_data->get('shippinglastname'),
-				"streetAddress" => $this->checkout_data->get('shippingaddress'),
-				"locality" => $this->checkout_data->get('shippingcity'),
-				"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.delivery_region' ), 'code' ),
-				"postalCode" => $this->checkout_data->get('shippingpostcode'),
-				"countryCodeAlpha2" => $this->checkout_data->get('shippingcountry')
-			],
-			"options" => [
-				"submitForSettlement" => $submit_for_settlement,
-				"threeDSecure" => [
-					"required" => $force3ds
-				]
-			]
-		));
 
 		// In theory all error handling should be done on the client side...?
 		if ( $result->success ) {
 			// Payment complete
 			$order->set( 'processed', $order_status )->save();
 			$order->set( 'transactid', $result->transaction->id )->save();
+
+			if ( false === $submit_for_settlement ) {
+				// Order is authorized
+				$order->set( 'bt_order_status' , 'Open' )->save();
+				$order->add_note( __( 'Order opened. Capture the payment below.', 'wp-e-commerce' ) )->save();
+			}
+
 			$this->go_to_transaction_results();
 		} else {
 			if ( $result->transaction ) {
@@ -253,7 +204,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 				wp_safe_redirect( $this->get_shopping_cart_payment_url() );
 			}
 		}
-		exit;	
+		exit;
 	}
 
 	public function check_3ds_risk_transaction( $nonce ) {
@@ -320,7 +271,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 
 	public function capture_payment( $log, $transaction_id ) {
 
-		if ( $log->get( 'gateway' ) == 'braintree-credit-cards' ) {
+		if ( $log->get( 'gateway' ) == 'braintree-credit-cards' && $log->get( 'bt_order_status' ) == 'Open' ) {
 
 			$transaction_id = $log->get( 'transactid' );
 			$log->get( 'totalprice' );
@@ -339,6 +290,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 
 			if ( $result->success ) {
 				$log->set( 'processed', WPSC_Purchase_Log::ACCEPTED_PAYMENT )->save();
+				$log->set( 'bt_order_status' , 'Completed' )->save();
 
 				return true;
 			} else {
@@ -350,6 +302,39 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 
 	public function process_refund( $log, $amount = 0.00, $reason = '', $manual = false ) {
 		if ( $log->get( 'gateway' ) == 'braintree-credit-cards' ) {
+
+			// Check if its a void
+			if ( $log->get( 'bt_order_status' ) == 'Open' ) {
+				// Process a Void on the Authorization
+				$transaction_id = $log->get( 'transactid' );
+
+				if ( WPEC_Btree_Helpers::bt_auth_can_connect() && WPEC_Btree_Helpers::bt_auth_is_connected() ) {
+					$acc_token = get_option( 'wpec_braintree_auth_access_token' );
+
+					$gateway = new Braintree_Gateway( array(
+						'accessToken' => $acc_token,
+					));
+					$result = $gateway->transaction()->void( $transaction_id );
+				} else {
+					WPEC_Btree_Helpers::setBraintreeConfiguration();
+					$result = Braintree_Transaction::void( $transaction_id );
+				}
+
+				if ( $result->success ) {
+					// Set a log meta entry, and save log before adding refund note.
+					$log->set( 'processed', WPSC_Purchase_Log::INCOMPLETE_SALE )->save();
+					$log->set( 'total_order_refunded' , $log->get( 'totalprice' ) )->save();
+					$log->add_note( __( 'Authorization voided.', 'wp-e-commerce' ) )->save();
+					$log->set( 'bt_order_status', 'Voided' )->save();
+
+					remove_action( 'wpsc_order_fully_refunded', 'wpsc_update_order_status_fully_refunded' );
+
+					return true;
+				} else {
+					return false;
+				}
+			}
+			// End Void code block
 
 			if ( 0.00 == $amount ) {
 				return new WP_Error( 'braintree_credit_cards_refund_error', __( 'Refund Error: You need to specify a refund amount.', 'wp-e-commerce' ) );
@@ -372,6 +357,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 
 				// Set a log meta entry, and save log before adding refund note.
 				$log->set( 'total_order_refunded' , $amount + $current_refund )->save();
+				$log->set( 'bt_order_status', 'Refunded' )->save();
 
 				$log->add_refund_note(
 					sprintf( __( 'Refunded %s via Manual Refund', 'wp-e-commerce' ), wpsc_currency_display( $amount ) ),
@@ -401,12 +387,14 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 
 				// Set a log meta entry, and save log before adding refund note.
 				$log->set( 'total_order_refunded' , $amount + $current_refund )->save();
+				$log->set( 'bt_order_status', 'Refunded' )->save();
 
 				return true;
 			} else {
 				return false;
 			}
 		}
+
 		return false;		
 	}
 
