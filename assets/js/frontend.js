@@ -101,7 +101,7 @@
 							break;
 						  case 'HOSTED_FIELDS_FIELDS_INVALID':
 							// occurs when certain fields do not pass client side validation
-							errmsg = 'Some credit card fields are invalid:' + tokenizeErr.details.invalidFieldKeys;
+							errmsg = 'Some credit card fields are invalid: ' + tokenizeErr.details.invalidFieldKeys;
 							break;
 						  case 'HOSTED_FIELDS_TOKENIZATION_FAIL_ON_DUPLICATE':
 							// occurs when:
@@ -136,6 +136,7 @@
 
 						console.error(errmsg);
 						alert(errmsg);
+						location.reload();
 						return;
 					}
 					
@@ -148,11 +149,8 @@
 							}, function (err, response) {
 								// Handle response
 								if (!err) {
-									console.log(response);
 									var liabilityShifted = response.liabilityShifted; // true || false
 									var liabilityShiftPossible =  response.liabilityShiftPossible; // true || false
-									console.log(liabilityShifted);
-									console.log(liabilityShiftPossible);
 									if ( liabilityShifted ) {
 										// The 3D Secure payment was successful so proceed with this nonce
 										$('input[name="pp_btree_method_nonce"]').val( response.nonce );
@@ -182,6 +180,7 @@
 								} else {
 									// Handle errors
 									console.log('verification error:', err);
+									alert( 'Sorry this card type isn`t supported, please use a different card or payment method' );
 									return;
 								}
 							});

@@ -109,6 +109,10 @@ class WPEC_Btree_Helpers {
 		
 		$is_cart = wpsc_is_theme_engine( '1.0' ) ? wpsc_is_checkout() : ( _wpsc_get_current_controller_method() == 'payment' );
 		if ( $is_cart ) {
+			//Get Cards Gateway settings
+			$bt_cc = new WPSC_Payment_Gateway_Setting( 'braintree-credit-cards' );
+			//Get PayPal Gateway settings
+			$bt_pp = new WPSC_Payment_Gateway_Setting( 'braintree-paypal' );
 
 			// Check if we are using Auth and connected
 			if ( self::bt_auth_can_connect() && self::bt_auth_is_connected() ) {
@@ -116,20 +120,16 @@ class WPEC_Btree_Helpers {
 				$gateway = new Braintree_Gateway( array(
 					'accessToken' => $acc_token
 				));
+
 				$clientToken = $gateway->clientToken()->generate();
+				$pp_sandbox = self::get_auth_environment();
 			} else {
 				self::setBraintreeConfiguration();
 				$clientToken = Braintree_ClientToken::generate();
+
+				$bt_pp_sandbox = $bt_pp->get('sandbox');
+				$pp_sandbox = $bt_pp_sandbox == '1' ? 'sandbox' : 'production';
 			}
-			
-			//Get Cards Gateway settings
-			$bt_cc = new WPSC_Payment_Gateway_Setting( 'braintree-credit-cards' );
-			//Get PayPal Gateway settings
-			$bt_pp = new WPSC_Payment_Gateway_Setting( 'braintree-paypal' );
-			
-			
-			$bt_pp_sandbox = $bt_pp->get('sandbox');
-			$pp_sandbox = $bt_pp_sandbox == '1' ? 'sandbox' : 'production' ;	
 			
 			// Set PP Button styles
 			$pp_but_label = get_option( 'bt_vzero_pp_payments_but_label' ) != false ? get_option( 'bt_vzero_pp_payments_but_label' ) : 'pay' ;
@@ -616,6 +616,25 @@ class WPEC_Btree_Helpers {
 		} else {
 			WPSC_Message_Collection::get_instance()->add( $error, 'error', 'main', 'flash' );
 		}
+	}
+	
+	/**
+	 * Gets configured environment.
+	 *
+	 * If connected to Braintree Auth, the environment was explicitly set at
+	 * the time of authentication.
+	 *
+	 * @since 1.0.0
+	 * @return string
+	 */
+	public function get_auth_environment() {
+		$environment = false;
+
+		if ( $this->bt_auth_is_connected() ) {
+			$environment = get_option( 'wpec_braintree_auth_environment', 'production' );
+		}
+
+		return $environment;
 	}
 }
 add_action( 'wpsc_pre_load', 'WPEC_Btree_Helpers::get_instance' );

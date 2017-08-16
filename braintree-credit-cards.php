@@ -4,6 +4,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 	public function __construct() {
 		parent::__construct();
 		$this->title            = __( 'PayPal powered by Braintree - Cards', 'wpsc_authorize_net' );
+		$this->display_name     = __( 'SOMEGATEWAY', 'wpsc_authorize_net' );
 		$this->image            = WPSC_URL . '/images/cc.gif';
 		$this->supports         = array( 'default_credit_card_form', 'tokenization', 'tev1', 'auth-capture', 'refunds' );
 		$this->sandbox          = $this->setting->get( 'sandbox' ) == '1' ? true : false;
@@ -119,9 +120,9 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 
 		if ( ! $threedcheck ) {
 			// 3DS check failed so return;
-			$error = '3D Secure verification failed!';
+			$error = __( '3D Secure verification failed.', 'wp-e-commerce' );
 			$order->set( 'processed', WPSC_Purchase_Log::INCOMPLETE_SALE )->save();
-			$log->add_note( $error );
+			$order->add_note( $error );
 			WPEC_Btree_Helpers::set_payment_error_message( $error );
 			wp_safe_redirect( $this->get_shopping_cart_payment_url() );
 		}
@@ -186,7 +187,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 					WPEC_Btree_Helpers::set_payment_error_message( $result->transaction->processorResponseText );
 					wp_safe_redirect( $this->get_shopping_cart_payment_url() );
 				} else {
-					$error = "Payment Error: " . $result->message;
+					$error[] = "Payment Error: " . $result->message;
 
 					WPEC_Btree_Helpers::set_payment_error_message( $error );
 					wp_safe_redirect( $this->get_shopping_cart_payment_url() );
@@ -246,7 +247,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 				WPEC_Btree_Helpers::set_payment_error_message( $result->transaction->processorResponseText );
 				wp_safe_redirect( $this->get_shopping_cart_payment_url() );
 			} else {
-				$error = "Payment Error: " . $result->message;
+				$error[] = "Payment Error: " . $result->message;
 
 				WPEC_Btree_Helpers::set_payment_error_message( $error );
 				wp_safe_redirect( $this->get_shopping_cart_payment_url() );
