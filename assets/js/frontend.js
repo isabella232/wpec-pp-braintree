@@ -1,5 +1,5 @@
 /*global jQuery, wpec_ppbt */
-(function($) {
+( function($) {
 	var clientToken = wpec_ppbt.ctoken;
 	var errmsg = '';
 	var components = {

@@ -99,7 +99,8 @@ class WPEC_Btree_Helpers {
 			return;
 		}
 
-		wp_enqueue_script( 'bt-script', WPEC_PPBRAINTREE_VZERO_PLUGIN_URL . 'assets/js/admin.js', array( 'jquery' ), WPSC_VERSION, true );
+		wp_register_script( 'pp-bt-admin', WPEC_PPBRAINTREE_VZERO_PLUGIN_URL . 'assets/js/admin.js', array( 'jquery' ), WPSC_VERSION, true );
+		wp_enqueue_script( 'pp-bt-admin' );
 	}
 
 	public static function pp_braintree_enqueue_js() {
@@ -225,7 +226,7 @@ class WPEC_Btree_Helpers {
 		if ( self::bt_auth_can_connect() ) {
 			$connect_url = ! self::bt_auth_is_connected() ? self::wpec_bt_auth_get_connect_url() : self::wpec_bt_auth_get_disconnect_url();
 			$button_image_url = WPEC_PPBRAINTREE_VZERO_PLUGIN_URL . '/braintree/images/connect-braintree.png';
-			$output .= '<tr class="wc-braintree-auth">
+			$output .= '<tr class="btpp-braintree-auth">
 							<td>Connect/Disconnect</td>';
 			if ( self::bt_auth_is_connected() ) {
 				$output .= "<td><a href='". esc_url( $connect_url ) . "' class='button-primary'>" . esc_html__( 'Disconnect from PayPal Powered by Braintree', 'wpec-paypal-braintree-vzero' ) . "</a>

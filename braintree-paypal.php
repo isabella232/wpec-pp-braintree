@@ -176,20 +176,16 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 	 	exit();
 	}
 
-	/**
-	 * Creates the Braintree PayPal configuration form in the admin section
-	 * @return string
-	 */
-	public function setup_form() {
-		echo WPEC_Btree_Helpers::show_connect_button();
+	public function manual_credentials( $hide = false ) {
+		$hidden = $hide ? ' style="display:none;"' : '';
 	?>
 		<!-- Account Credentials -->
-		<tr>
+		<tr id="bt-pp-manual-header">
 			<td colspan="2">
 				<h4><?php _e( 'Account Credentials', 'wpsc_authorize_net' ); ?></h4>
 			</td>
 		</tr>
-		<tr>
+		<tr id="bt-pp-manual-public-key">
 			<td>
 				<label for="wpsc-worldpay-secure-net-id"><?php _e( 'Public Key', 'wpsc_authorize_net' ); ?></label>
 			</td>
@@ -197,7 +193,7 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 				<input type="text" name="<?php echo esc_attr( $this->setting->get_field_name( 'public_key' ) ); ?>" value="<?php echo esc_attr( $this->setting->get( 'public_key' ) ); ?>" id="wpsc-anet-api-id" />
 			</td>
 		</tr>
-		<tr>
+		<tr id="bt-pp-manual-private-key">
 			<td>
 				<label for="wpsc-worldpay-secure-key"><?php _e( 'Private Key', 'wpsc_authorize_net' ); ?></label>
 			</td>
@@ -205,6 +201,29 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 				<input type="text" name="<?php echo esc_attr( $this->setting->get_field_name( 'private_key' ) ); ?>" value="<?php echo esc_attr( $this->setting->get( 'private_key' ) ); ?>" id="wpsc-anet-trans-key" />
 			</td>
 		</tr>
+		<tr id="bt-pp-manual-sandbox">
+			<td>
+				<label><?php _e( 'Sandbox Mode', 'wpsc_authorize_net' ); ?></label>
+			</td>
+			<td>
+				<label><input <?php checked( $this->setting->get( 'sandbox' ) ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'sandbox' ) ); ?>" value="1" /> <?php _e( 'Yes', 'wpsc_authorize_net' ); ?></label>&nbsp;&nbsp;&nbsp;
+				<label><input <?php checked( (bool) $this->setting->get( 'sandbox' ), false ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'sandbox' ) ); ?>" value="0" /> <?php _e( 'No', 'wpsc_authorize_net' ); ?></label>
+			</td>
+		</tr>
+	<?php
+	}
+
+	/**
+	 * Creates the Braintree PayPal configuration form in the admin section
+	 * @return string
+	 */
+	public function setup_form() {
+		if ( WPEC_Btree_Helpers::bt_auth_can_connect() ) {
+			echo WPEC_Btree_Helpers::show_connect_button();
+		} else {
+			$this->manual_credentials(true);
+		}
+	?>
 		<tr>
 			<td colspan="2">
 				<h4><?php _e( 'Gateway Settings', 'wpsc_authorize_net' ); ?></h4>
@@ -243,15 +262,6 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 					<option value='pill' <?php selected( 'pill', $this->setting->get( 'but_shape' ) ); ?>><?php _e( 'Pill', 'wpec-square' )?></option>
 					<option value='rect' <?php selected( 'rect', $this->setting->get( 'but_shape' ) ); ?>><?php _e( 'Rect', 'wpec-square' )?></option>
 				</select>
-			</td>
-		</tr>
-		<tr>
-			<td>
-				<label><?php _e( 'Sandbox Mode', 'wpsc_authorize_net' ); ?></label>
-			</td>
-			<td>
-				<label><input <?php checked( $this->setting->get( 'sandbox' ) ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'sandbox' ) ); ?>" value="1" /> <?php _e( 'Yes', 'wpsc_authorize_net' ); ?></label>&nbsp;&nbsp;&nbsp;
-				<label><input <?php checked( (bool) $this->setting->get( 'sandbox' ), false ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'sandbox' ) ); ?>" value="0" /> <?php _e( 'No', 'wpsc_authorize_net' ); ?></label>
 			</td>
 		</tr>
 		<!-- Error Logging -->
