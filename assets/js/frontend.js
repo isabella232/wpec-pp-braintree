@@ -214,6 +214,7 @@
 					shape: wpec_ppbt.but_shape,
 					color: wpec_ppbt.but_colour,
 				},
+				commit: true,
 			payment: function () {
 				var args = {
 					 flow: 'checkout', // Required
@@ -229,12 +230,12 @@
 					enableShippingAddress: true,
 					shippingAddressEditable: false,
 					shippingAddressOverride: {
-					  recipientName: jQuery( 'input[title="billingfirstname"]' ).val() + jQuery( 'input[title="billinglastname"]' ).val(),
-					  line1: jQuery( 'textarea[title="billingaddress"]' ).text(),
-					  city: jQuery( 'input[title="billingcity"]' ).val(),
-					  countryCode: jQuery( 'select[data-wpsc-meta-key="billingcountry"]' ).val(),
-					  postalCode: jQuery( 'input[title="billingpostcode"]' ).val(),
-					  state: replace_state_code( jQuery( 'input[title="billingstate"]' ).val() ),
+					  recipientName: $( 'input[title="shippingfirstname"]' ).val() + $( 'input[title="shippinglastname"]' ).val(),
+					  line1: $( 'textarea[title="shippingaddress"]' ).text(),
+					  city: $( 'input[title="shippingaddress"]' ).val(),
+					  countryCode: $( 'select[data-wpsc-meta-key="shippingcountry"]' ).val(),
+					  postalCode: $( 'input[title="shippingpostcode"]' ).val(),
+					  state: replace_state_code( $( 'input[title="shippingstate"]' ).val() ),
 					}
 				} );
 				} else {    

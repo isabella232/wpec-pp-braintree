@@ -104,7 +104,7 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 			// In theory all error handling should be done on the client side...?
 			if ( $result->success ) {
 				// Payment complete
-				$order->set( 'processed', $order_status )->save();
+				$order->set( 'processed', WPSC_Purchase_Log::ACCEPTED_PAYMENT )->save();
 				$order->set( 'transactid', $result->transaction->id )->save();
 				$this->go_to_transaction_results();
 			} else {
@@ -158,7 +158,7 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 			// In theory all error handling should be done on the client side...?
 			if ( $result->success ) {
 				// Payment complete
-				$order->set( 'processed', $order_status )->save();
+				$order->set( 'processed', WPSC_Purchase_Log::ACCEPTED_PAYMENT )->save();
 				$order->set( 'transactid', $result->transaction->id )->save();
 				$this->go_to_transaction_results();
 			} else {
