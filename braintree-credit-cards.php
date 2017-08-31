@@ -18,7 +18,6 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 		if ( ! WPEC_Btree_Helpers::is_gateway_setup( 'braintree-credit-cards' ) ) {
 			// Remove gateway if its not setup properly
 			add_filter( 'wpsc_get_active_gateways', array( $this, 'remove_gateways' ) );
-			//add_filter( 'wpsc_get_gateway_list'   , array( $this, 'remove_gateways' ) );
 			add_filter( 'wpsc_payment_method_form_fields', array( $this, 'remove_gateways_v2' ), 999 );			
 		}
 
