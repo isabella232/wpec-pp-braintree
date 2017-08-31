@@ -62,7 +62,7 @@ class WPEC_Btree_Helpers {
 		add_filter( 'wpsc_init', array( self::$instance, 'register_gateways' ) );
 		add_action( 'wpsc_loaded', array( self::$instance, 'init' ), 2 );
 		add_action( 'admin_enqueue_scripts', array( self::$instance, 'admin_scripts' ) );
-		add_action( 'wp_enqueue_scripts' , array( self::$instance, 'pp_braintree_enqueue_js' ), 100 );
+		//add_action( 'wp_enqueue_scripts' , array( self::$instance, 'pp_braintree_enqueue_js' ), 100 );
 		add_action( 'wp_head' , array( self::$instance, 'add_css' ), 100 );
 	}
 
@@ -219,6 +219,16 @@ class WPEC_Btree_Helpers {
 		$selected_gateways = get_option( 'custom_gateway_options', array() );
 		
 		return in_array( $gateway, $selected_gateways );
+	}
+	
+	public static function is_gateway_setup( $gateway ) {
+		$settings = new WPSC_Payment_Gateway_Setting( $gateway );
+		
+
+		if ( ( self::bt_auth_can_connect() && ! self::bt_auth_is_connected() ) || ( ! $settings->get( 'public_key' ) || ! $settings->get( 'private_key' ) ) ) {
+			return false;
+		}
+		return true;
 	}
 
 	public static function show_connect_button() {

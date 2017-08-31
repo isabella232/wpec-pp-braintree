@@ -16,10 +16,11 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 		parent::init();
 
 		// Disable if not setup using BT Auth
-		if ( WPEC_Btree_Helpers::bt_auth_can_connect() && ! WPEC_Btree_Helpers::bt_auth_is_connected() ) {
-			return;
-		} elseif ( ! WPEC_Btree_Helpers::bt_auth_can_connect() && ! $this->setting->get_field_name( 'public_key' ) && ! $this->setting->get_field_name( 'private_key' ) ) {
-			return;
+		if ( ! WPEC_Btree_Helpers::is_gateway_setup( 'braintree-paypal' ) ) {
+			// Remove gateway if its not setup properly
+			add_filter( 'wpsc_get_active_gateways', array( $this, 'remove_gateways' ) );
+			add_filter( 'wpsc_get_gateway_list'   , array( $this, 'remove_gateways' ) );
+			add_filter( 'wpsc_payment_method_form_fields', array( $this, 'remove_gateways_v2' ), 999 );			
 		}
 
 		// Tev1 fields
@@ -300,5 +301,23 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 	 */
 	public function get_image_url() {
 		return apply_filters( 'wpsc_braintree-paypal_mark_html', 'https://www.paypalobjects.com/webstatic/en_US/i/buttons/PP_logo_h_200x51.png' );
+	}
+
+	public function remove_gateways( $gateways ) {
+		foreach ( $gateways as $i => $gateway ) {
+			if ( 'braintree-paypal' == $gateway ) {
+				unset( $gateways[ $i ] );
+			}
+		}
+		return $gateways;
+	}
+
+	public function remove_gateways_v2( $fields ) {
+		foreach ( $fields as $i => $field ) {
+			if ( 'braintree-paypal' == $field['value'] ) {
+				unset( $fields[ $i ] );
+			}
+		}
+		return $fields;
 	}
 }
