@@ -228,10 +228,15 @@ class WPEC_Btree_Helpers {
 	public static function is_gateway_setup( $gateway ) {
 		$settings = new WPSC_Payment_Gateway_Setting( $gateway );
 
-		if ( ( self::bt_auth_can_connect() && ! self::bt_auth_is_connected() ) || ( ! $settings->get( 'public_key' ) || ! $settings->get( 'private_key' ) ) ) {
-			return false;
+		if ( self::bt_auth_can_connect() && self::bt_auth_is_connected() ) {
+			return true;
 		}
-		return true;
+
+		if ( $settings->get( 'public_key' ) && $settings->get( 'private_key' ) ) {
+			return true;
+		}
+
+		return false;
 	}
 
 	public static function show_connect_button() {
@@ -336,7 +341,7 @@ class WPEC_Btree_Helpers {
 	}
 
 	public static function bt_auth_is_connected() {
-		$token = get_option( 'wpec_braintree_auth_access_token' );
+		$token = get_option( 'wpec_braintree_auth_access_token', '' );
 
 		return ! empty( $token );
 	}
