@@ -4,7 +4,6 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 	public function __construct() {
 		parent::__construct();
 		$this->title            = __( 'PayPal powered by Braintree - Cards', 'wpsc_authorize_net' );
-		$this->display_name     = __( 'SOMEGATEWAY', 'wpsc_authorize_net' );
 		$this->image            = WPSC_URL . '/images/cc.gif';
 		$this->supports         = array( 'default_credit_card_form', 'tokenization', 'tev1', 'auth-capture', 'refunds' );
 		$this->sandbox          = $this->setting->get( 'sandbox' ) == '1' ? true : false;
@@ -14,6 +13,13 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 
 	public function init() {
 		parent::init();
+		
+		// Disable if not setup using BT Auth
+		if ( WPEC_Btree_Helpers::bt_auth_can_connect() && ! WPEC_Btree_Helpers::bt_auth_is_connected() ) {
+			return;
+		} elseif ( ! WPEC_Btree_Helpers::bt_auth_can_connect() && ! $this->setting->get_field_name( 'public_key' ) && ! $this->setting->get_field_name( 'private_key' ) ) {
+			return;
+		}
 
 		// Tev1 fields
 		add_action( 'wpsc_tev1_default_credit_card_form_fields_braintree-credit-cards', array( $this, 'tev1_checkout_fields'), 10, 2 );
@@ -56,7 +62,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 	}
 
 	public function tev1_checkout_fields( $fields, $name ) {
-		unset($fields['card-name-field']);
+		unset( $fields['card-name-field'] );
 
 		$fields['card-number-field'] = '<tr><td class="wpsc-form-row wpsc-form-row-wide wpsc-cc-field">
 					<label for="' . esc_attr( $name ) . '-card-number">' . __( 'Card Number', 'wp-e-commerce' ) . ' <span class="required">*</span></label></td>
@@ -166,6 +172,9 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 			),
 			'deviceData' => $kount_fraud,
 		);
+		
+		var_dump($this->checkout_data->get('shippingstate') );
+		exit;
 
 		if ( WPEC_Btree_Helpers::bt_auth_is_connected() ) {
 			$acc_token = get_option( 'wpec_braintree_auth_access_token' );

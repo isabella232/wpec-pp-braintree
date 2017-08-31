@@ -93,7 +93,7 @@ class WPEC_Btree_Helpers {
 
 		return $args;
 	}
-	
+
 	public function admin_scripts( $hook ) {
 		if ( 'settings_page_wpsc-settings' !== $hook ) {
 			return;
@@ -107,7 +107,7 @@ class WPEC_Btree_Helpers {
 		if ( ! self::is_gateway_active( 'braintree-credit-cards' ) && ! self::is_gateway_active( 'braintree-paypal' ) ) {
 			return;
 		}
-		
+
 		$is_cart = wpsc_is_theme_engine( '1.0' ) ? wpsc_is_checkout() : ( _wpsc_get_current_controller_method() == 'payment' );
 		if ( $is_cart ) {
 			//Get Cards Gateway settings
@@ -131,7 +131,7 @@ class WPEC_Btree_Helpers {
 				$bt_pp_sandbox = $bt_pp->get('sandbox');
 				$pp_sandbox = $bt_pp_sandbox == '1' ? 'sandbox' : 'production';
 			}
-			
+
 			// Set PP Button styles
 			$pp_but_label = get_option( 'bt_vzero_pp_payments_but_label' ) != false ? get_option( 'bt_vzero_pp_payments_but_label' ) : 'pay' ;
 			$pp_but_colour = get_option( 'bt_vzero_pp_payments_but_colour' ) != false ? get_option( 'bt_vzero_pp_payments_but_colour' ) : 'gold' ;
@@ -603,7 +603,7 @@ class WPEC_Btree_Helpers {
 		delete_option( 'wpec_braintree_auth_environment' );
 		delete_option( 'wpec_braintree_auth_merchant_id' );
 		wp_safe_redirect( add_query_arg( 'wpec_braintree_disconnected', true, admin_url( 'options-general.php?page=wpsc-settings&tab=gateway' ) ) );
-		exit;		
+		exit;
 	}
 	
 	public static function set_payment_error_message( $error ) {

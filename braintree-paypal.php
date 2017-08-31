@@ -15,6 +15,13 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 	public function init() {
 		parent::init();
 
+		// Disable if not setup using BT Auth
+		if ( WPEC_Btree_Helpers::bt_auth_can_connect() && ! WPEC_Btree_Helpers::bt_auth_is_connected() ) {
+			return;
+		} elseif ( ! WPEC_Btree_Helpers::bt_auth_can_connect() && ! $this->setting->get_field_name( 'public_key' ) && ! $this->setting->get_field_name( 'private_key' ) ) {
+			return;
+		}
+
 		// Tev1 fields
 		add_filter( 'wpsc_tev1_default_credit_card_form_fields_braintree-paypal', array( $this, 'tev1_checkout_fields'), 10, 2 );
 		// Tev2 fields

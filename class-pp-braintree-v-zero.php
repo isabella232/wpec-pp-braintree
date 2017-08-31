@@ -544,6 +544,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 			self::setBraintreeConfiguration();
 			$clientToken = Braintree_ClientToken::generate();
 		}
+
 		$pp_sandbox = get_option( 'braintree_pp_sandbox_mode', 'on' );
 		$sandbox = $pp_sandbox == 'on' ? 'sandbox' : 'production' ;	
 		// Set PP Button styles
@@ -569,6 +570,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 			'is_pp_active' => self::is_gateway_active( 'wpsc_merchant_braintree_v_zero_pp' ),
 			)
 		);
+
 		wp_enqueue_script( 'pp-braintree' );
 		wp_enqueue_script( 'ppbtclient', 'https://js.braintreegateway.com/web/3.20.0/js/client.min.js', array(), null, true );
 		wp_enqueue_script( 'ppbthosted', 'https://js.braintreegateway.com/web/3.20.0/js/hosted-fields.min.js', array(), null, true );
@@ -577,7 +579,7 @@ class wpsc_merchant_braintree_v_zero extends wpsc_merchant {
 		wp_enqueue_script( 'ppbtthreeds', 'https://js.braintreegateway.com/web/3.20.0/js/three-d-secure.min.js', array(), null, true );
 		wp_enqueue_script( 'ppbtdata', 'https://js.braintreegateway.com/web/3.20.0/js/data-collector.min.js', array(), null, true );
 	}
-	
+
 	public static function pp_braintree_add_css() {
 		if ( ! self::is_gateway_active( 'wpsc_merchant_braintree_v_zero_pp' ) && ! self::is_gateway_active( 'wpsc_merchant_braintree_v_zero_cc' ) ) {
 			return;
