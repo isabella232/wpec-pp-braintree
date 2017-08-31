@@ -527,7 +527,6 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 	}
 
 	public function remove_gateways( $gateways ) {
-		var_dump($gateways);
 		foreach ( $gateways as $i => $gateway ) {
 			if ( 'braintree-credit-cards' == $gateway ) {
 				unset( $gateways[ $i ] );

@@ -62,7 +62,7 @@ class WPEC_Btree_Helpers {
 		add_filter( 'wpsc_init', array( self::$instance, 'register_gateways' ) );
 		add_action( 'wpsc_loaded', array( self::$instance, 'init' ), 2 );
 		add_action( 'admin_enqueue_scripts', array( self::$instance, 'admin_scripts' ) );
-		//add_action( 'wp_enqueue_scripts' , array( self::$instance, 'pp_braintree_enqueue_js' ), 100 );
+		add_action( 'wp_enqueue_scripts' , array( self::$instance, 'pp_braintree_enqueue_js' ), 100 );
 		add_action( 'wp_head' , array( self::$instance, 'add_css' ), 100 );
 	}
 
@@ -105,6 +105,10 @@ class WPEC_Btree_Helpers {
 
 	public static function pp_braintree_enqueue_js() {
 		if ( ! self::is_gateway_active( 'braintree-credit-cards' ) && ! self::is_gateway_active( 'braintree-paypal' ) ) {
+			return;
+		}
+
+		if ( ! WPEC_Btree_Helpers::is_gateway_setup( 'braintree-credit-cards' ) || ! WPEC_Btree_Helpers::is_gateway_setup( 'braintree-paypal' ) ) {
 			return;
 		}
 
