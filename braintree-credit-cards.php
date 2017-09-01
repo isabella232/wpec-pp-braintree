@@ -173,9 +173,6 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 			'deviceData' => $kount_fraud,
 		);
 		
-		var_dump($this->checkout_data->get('shippingstate') );
-		exit;
-
 		if ( WPEC_Btree_Helpers::bt_auth_is_connected() ) {
 			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
 			$gateway = new Braintree_Gateway( array(
