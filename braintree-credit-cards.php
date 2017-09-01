@@ -135,6 +135,13 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 
 		$phone_field = $this->checkout_data->get('billingphone');
 
+		$country = new WPSC_Country( $this->checkout_data->get('shippingcountry') );
+		if ( $country->has_regions() ) {
+			$shipping_state = wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.delivery_region' ), 'code' );
+		} else {
+			$shipping_state = $this->checkout_data->get('shippingstate');
+		}
+
 		$params = array(
 			'amount' => $order->get('totalprice'),
 			'channel' => 'WPec_Cart_PPpbBT',
@@ -160,7 +167,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 				'lastName' => $this->checkout_data->get('shippinglastname'),
 				'streetAddress' => $this->checkout_data->get('shippingaddress'),
 				'locality' => $this->checkout_data->get('shippingcity'),
-				'region' => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.delivery_region' ), 'code' ),
+				'region' => $shipping_state,
 				'postalCode' => $this->checkout_data->get('shippingpostcode'),
 				'countryCodeAlpha2' => $this->checkout_data->get('shippingcountry'),
 			),

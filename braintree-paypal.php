@@ -66,6 +66,13 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 		$order = $this->purchase_log;
 		$payment_method_nonce = $_POST['pp_btree_method_nonce'];
 
+		$country = new WPSC_Country( $this->checkout_data->get('shippingcountry') );
+		if ( $country->has_regions() ) {
+			$shipping_state = wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.delivery_region' ), 'code' );
+		} else {
+			$shipping_state = $this->checkout_data->get('shippingstate');
+		}
+
 		//Submit using $gateway(for auth users)
 		if ( WPEC_Btree_Helpers::bt_auth_can_connect() && WPEC_Btree_Helpers::bt_auth_is_connected() ) {
 			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
@@ -99,7 +106,7 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 					"lastName" => $this->checkout_data->get('shippinglastname'),
 					"streetAddress" => $this->checkout_data->get('shippingaddress'),
 					"locality" => $this->checkout_data->get('shippingcity'),
-					"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.delivery_region' ), 'code' ),
+					"region" => $shipping_state,
 					"postalCode" => $this->checkout_data->get('shippingpostcode'),
 					"countryCodeAlpha2" => $this->checkout_data->get('shippingcountry')
 				],
@@ -153,7 +160,7 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 				"lastName" => $this->checkout_data->get('shippinglastname'),
 				"streetAddress" => $this->checkout_data->get('shippingaddress'),
 				"locality" => $this->checkout_data->get('shippingcity'),
-				"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.delivery_region' ), 'code' ),
+				"region" => $shipping_state,
 				"postalCode" => $this->checkout_data->get('shippingpostcode'),
 				"countryCodeAlpha2" => $this->checkout_data->get('shippingcountry')
 			],
