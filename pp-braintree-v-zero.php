@@ -655,5 +655,55 @@ class WPEC_Btree_Helpers {
 
 		return $environment;
 	}
+
+	/**
+	 * Get the failure status info for the given parameter, either code or message
+	 * @since 1.0.0
+	 * @param string $type status info type, either `code` or `message`
+	 * @return string
+	 */
+	public static function get_failure_status_info( $result, $type ) {
+
+		// see https://developers.braintreepayments.com/reference/response/transaction/php#unsuccessful-result
+		$transaction = $result->transaction;
+		switch ( $transaction->status ) {
+
+			// gateway rejections are due to CVV, AVS, fraud, etc
+			case 'gateway_rejected':
+
+				$status = array(
+					'code'    => $transaction->gatewayRejectionReason,
+					'message' => $result->message,
+				);
+				break;
+
+			// soft/hard decline directly from merchant processor
+			case 'processor_declined':
+
+				$status = array(
+					'code'    => $transaction->processorResponseCode,
+					'message' => $transaction->processorResponseText . ( ! empty( $transaction->additionalProcessorResponse ) ? ' (' . $transaction->additionalProcessorResponse . ')' : '' ),
+				);
+				break;
+
+			// only can occur when attempting to settle a previously authorized charge
+			case 'settlement_declined':
+
+				$status = array(
+					'code' => $transaction->processorSettlementResponseCode,
+					'message' => $transaction->processorSettlementResponseText,
+				);
+				break;
+
+			// this path shouldn't execute, but for posterity
+			default:
+				$status = array(
+					'code'    => $transaction->status,
+					'message' => isset( $result->message ) ? $result->message : '',
+				);
+		}
+
+		return isset( $status[ $type] ) ? $status[ $type ] : null;
+	}
 }
 add_action( 'wpsc_pre_load', 'WPEC_Btree_Helpers::get_instance' );
