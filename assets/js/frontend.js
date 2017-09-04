@@ -232,7 +232,7 @@
 					shippingAddressOverride: {
 					  recipientName: $( 'input[title="shippingfirstname"]' ).val() + $( 'input[title="shippinglastname"]' ).val(),
 					  line1: $( 'textarea[title="shippingaddress"]' ).text(),
-					  city: $( 'input[title="shippingaddress"]' ).val(),
+					  city: $( 'input[title="shippingcity"]' ).val(),
 					  countryCode: $( 'select[data-wpsc-meta-key="shippingcountry"]' ).val(),
 					  postalCode: $( 'input[title="shippingpostcode"]' ).val(),
 					  state: replace_state_code( $( 'input[title="shippingstate"]' ).val() ),
