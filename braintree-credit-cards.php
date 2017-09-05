@@ -212,7 +212,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 				WPEC_Btree_Helpers::set_payment_error_message( $error );
 				wp_safe_redirect( $this->get_shopping_cart_payment_url() );
 			} else {
-				$error[] = "Payment Error: " . $result->message;
+				$error = "Payment Error: " . $result->message;
 
 				WPEC_Btree_Helpers::set_payment_error_message( $error );
 				wp_safe_redirect( $this->get_shopping_cart_payment_url() );
