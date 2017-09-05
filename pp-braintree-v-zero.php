@@ -137,10 +137,9 @@ class WPEC_Btree_Helpers {
 			}
 
 			// Set PP Button styles
-			$pp_but_label = get_option( 'bt_vzero_pp_payments_but_label' ) != false ? get_option( 'bt_vzero_pp_payments_but_label' ) : 'pay' ;
-			$pp_but_colour = get_option( 'bt_vzero_pp_payments_but_colour' ) != false ? get_option( 'bt_vzero_pp_payments_but_colour' ) : 'gold' ;
-			$pp_but_size = get_option( 'bt_vzero_pp_payments_but_size' ) != false ? get_option( 'bt_vzero_pp_payments_but_size' ) : 'responsive' ;
-			$pp_but_shape = get_option( 'bt_vzero_pp_payments_but_shape' ) != false ? get_option( 'bt_vzero_pp_payments_but_shape' ) : 'pill' ;		
+			$pp_but_colour = $bt_pp->get('but_colour') != false ? $bt_pp->get('but_colour') : 'gold';
+			$pp_but_size = $bt_pp->get('but_size') != false ? $bt_pp->get('but_size') : 'responsive';
+			$pp_but_shape = $bt_pp->get('but_shape') != false ? $bt_pp->get('but_shape') : 'pill';
 
 			wp_register_script( 'pp-braintree', WPEC_PPBRAINTREE_VZERO_PLUGIN_URL . 'assets/js/frontend.js', array( 'jquery' ), null, true );
 			wp_localize_script( 'pp-braintree', 'wpec_ppbt', array(
@@ -148,7 +147,7 @@ class WPEC_Btree_Helpers {
 				't3dsonly' => $bt_cc->get('three_d_secure_only'),
 				'ctoken' => $clientToken,
 				'sandbox' => $pp_sandbox,
-				'but_label' => $pp_but_label,
+				'but_label' => 'pay',
 				'but_colour' => $pp_but_colour,
 				'but_size' => $pp_but_size,
 				'but_shape' => $pp_but_shape,
