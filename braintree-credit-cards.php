@@ -480,11 +480,12 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 		</tr>		
 		<tr>
 			<td>
-				<label for="wpsc-worldpay-secure-key"><?php _e( 'Enable 3D Secure', 'wpsc_authorize_net' ); ?></label>
+				<label for="wpsc-worldpay-secure-key"><?php _e( '3D Secure Enabled', 'wpsc_authorize_net' ); ?></label>
 			</td>
 			<td>
-				<label><input <?php checked( $this->setting->get( 'three_d_secure' ) ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'three_d_secure' ) ); ?>" value="1" /> <?php _e( 'Yes', 'wpec-square' ); ?></label>&nbsp;&nbsp;&nbsp;
-				<label><input <?php checked( (bool) $this->setting->get( 'three_d_secure' ), false ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'three_d_secure' ) ); ?>" value="0" /> <?php _e( 'No', 'wpec-square' ); ?></label>
+				<label><input <?php checked( $this->setting->get( 'three_d_secure' ) ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'three_d_secure' ) ); ?>" value="1" disabled /> <?php _e( 'Yes', 'wpec-square' ); ?></label>&nbsp;&nbsp;&nbsp;
+				<label><input <?php checked( (bool) $this->setting->get( 'three_d_secure' ), false ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'three_d_secure' ) ); ?>" value="0" disabled /> <?php _e( 'No', 'wpec-square' ); ?></label>
+				<p class="description"><?php _e( 'You can change 3D Secure settings from within your Braintree account settings.', 'wpsc' ); ?></p>
 			</td>
 		</tr>
 		<tr>

@@ -589,6 +589,11 @@ class WPEC_Btree_Helpers {
 				update_option( 'wpec_braintree_auth_environment', $environment );
 				update_option( 'wpec_braintree_auth_merchant_id', $merchant_id );
 				$connected = true;
+				
+				// BT Authentication successful.
+				// Set 3D Secure setting here
+				self::set_3ds_setting();
+
 			} else {
 				// Show an error message maybe ?
 				$connected = false;
@@ -597,6 +602,7 @@ class WPEC_Btree_Helpers {
 			exit;
 		}
 	}
+
 	/**
 	 * Handles the Braintree Auth disconnect request
 	 *
@@ -622,7 +628,60 @@ class WPEC_Btree_Helpers {
 		wp_safe_redirect( add_query_arg( 'wpec_braintree_disconnected', true, admin_url( 'options-general.php?page=wpsc-settings&tab=gateway' ) ) );
 		exit;
 	}
-	
+
+	/**
+	 * Validates the access token or api credentials
+	 *
+	 * Generates a client token to verify credentials
+	 *
+	 * @since 1.0.0
+	 * @return string
+	 */
+	public static function is_client_token() {
+		if ( self::bt_auth_is_connected() ) {
+			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
+
+			try {
+				$gateway = new Braintree_Gateway( array( 'accessToken' => $acc_token ) );
+				$clientToken = $gateway->clientToken()->generate();
+			}
+			catch ( Braintree\Exception\Authentication $e ) {
+				return false;
+			}
+			catch ( Braintree_Exception_Configuration $e ) {
+				return false;
+			}
+		} else {
+			try {
+				self::setBraintreeConfiguration();
+				$clientToken = Braintree_ClientToken::generate();
+			}
+			catch ( Braintree_Exception_Configuration $e ) {
+				return false;
+			}
+			catch ( Braintree_Exception_Authentication $e ) {
+				return false;
+			}
+		}
+
+		return isset( $clientToken ) ? $clientToken : false;
+	}
+
+	public static function set_3ds_setting() {
+
+		$token = self::is_client_token();
+		if ( $token ) {
+			$decoded = json_decode( base64_decode( $token ) );
+			$three3ds = $decoded->threeDSecureEnabled;
+			$bt_cc = new WPSC_Payment_Gateway_Setting( 'braintree-credit-cards' );
+			if ( true == $three3ds ) {
+				$bt_cc->set('three_d_secure', '1');
+			} else {
+				$bt_cc->set('three_d_secure', '0');
+			}
+		}
+	}
+
 	public static function set_payment_error_message( $error ) {
 		if ( wpsc_is_theme_engine( '1.0' ) ) {
 			$messages = wpsc_get_customer_meta( 'checkout_misc_error_messages' );
