@@ -257,7 +257,10 @@
 				console.log('checkout.js payment cancelled', JSON.stringify(data, 0, 2));
 			  },
 			  onError: function (err) {
-				console.error('checkout.js error', err);
+				msg = 'There\'s been a problem processing your payment, please check and retry. If you continue to have an issue please choose an alternative payment method';
+				console.error( msg );
+				alert( msg );
+				return;
 			  }
 			}, document.getElementById( 'pp_braintree_pp_button' ) ).then(function () {
 			  // The PayPal button will be rendered in an html element with the id

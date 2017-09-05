@@ -665,6 +665,7 @@ class WPEC_Btree_Helpers {
 	public static function get_failure_status_info( $result, $type ) {
 
 		// see https://developers.braintreepayments.com/reference/response/transaction/php#unsuccessful-result
+		// As per recommendation show a generic response message
 		$transaction = $result->transaction;
 		switch ( $transaction->status ) {
 
@@ -673,7 +674,7 @@ class WPEC_Btree_Helpers {
 
 				$status = array(
 					'code'    => $transaction->gatewayRejectionReason,
-					'message' => $result->message,
+					'message' => 'There\'s been a problem processing your payment, please check and retry. If you continue to have an issue please choose an alternative payment method', //$result->message,
 				);
 				break;
 
@@ -682,7 +683,7 @@ class WPEC_Btree_Helpers {
 
 				$status = array(
 					'code'    => $transaction->processorResponseCode,
-					'message' => $transaction->processorResponseText . ( ! empty( $transaction->additionalProcessorResponse ) ? ' (' . $transaction->additionalProcessorResponse . ')' : '' ),
+					'message' => 'There\'s been a problem processing your payment, please check and retry. If you continue to have an issue please choose an alternative payment method', //$transaction->processorResponseText . ( ! empty( $transaction->additionalProcessorResponse ) ? ' (' . $transaction->additionalProcessorResponse . ')' : '' ),
 				);
 				break;
 
@@ -691,7 +692,7 @@ class WPEC_Btree_Helpers {
 
 				$status = array(
 					'code' => $transaction->processorSettlementResponseCode,
-					'message' => $transaction->processorSettlementResponseText,
+					'message' => 'There\'s been a problem processing your payment, please check and retry. If you continue to have an issue please choose an alternative payment method', //$transaction->processorSettlementResponseText,
 				);
 				break;
 
