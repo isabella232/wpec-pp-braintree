@@ -73,123 +73,73 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 			$shipping_state = $this->checkout_data->get('shippingstate');
 		}
 
-		//Submit using $gateway(for auth users)
-		if ( WPEC_Btree_Helpers::bt_auth_can_connect() && WPEC_Btree_Helpers::bt_auth_is_connected() ) {
-			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
+		$phone_field = $this->checkout_data->get('billingphone');
 
+		$params = array(
+			'amount' => $order->get('totalprice'),
+			'channel' => 'WPec_Cart_PPpbBT',
+			'orderId' => $order->get('id'),
+			'paymentMethodNonce' => $payment_method_nonce,
+			'customer' => array(
+				'firstName' => $this->checkout_data->get('billingfirstname'),
+				'lastName' => $this->checkout_data->get('billinglastname'),
+				'phone' => isset( $phone_field ) ? $phone_field : '',
+				'email' => $this->checkout_data->get('billingemail'),
+			),
+			'billing' => array(
+				'firstName' => $this->checkout_data->get('billingfirstname'),
+				'lastName' => $this->checkout_data->get('billinglastname'),
+				'streetAddress' => $this->checkout_data->get('billingaddress'),
+				'locality' => $this->checkout_data->get('billingcity'),
+				'region' => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.billing_region' ), 'code' ),
+				'postalCode' => $this->checkout_data->get('billingpostcode'),
+				'countryCodeAlpha2' => $this->checkout_data->get('billingcountry'),
+			),
+			'shipping' => array(
+				'firstName' => $this->checkout_data->get('shippingfirstname'),
+				'lastName' => $this->checkout_data->get('shippinglastname'),
+				'streetAddress' => $this->checkout_data->get('shippingaddress'),
+				'locality' => $this->checkout_data->get('shippingcity'),
+				'region' => $shipping_state,
+				'postalCode' => $this->checkout_data->get('shippingpostcode'),
+				'countryCodeAlpha2' => $this->checkout_data->get('shippingcountry'),
+			),
+			'options' => array(
+				'submitForSettlement' => true,
+			),
+		);
+
+		if ( WPEC_Btree_Helpers::bt_auth_is_connected() ) {
+			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
 			$gateway = new Braintree_Gateway( array(
 				'accessToken' => $acc_token,
 			));
 
-			$result = $gateway->transaction()->sale([
-				"amount" => $order->get('totalprice'),
-				"paymentMethodNonce" => $payment_method_nonce,
-				"channel" => "WPec_Cart_PPpbBT",
-				"orderId" => $order->get('id'),
-				"customer" => [
-					"firstName" => $this->checkout_data->get('billingfirstname'),
-					"lastName" => $this->checkout_data->get('billinglastname'),
-					"phone" => isset( $phone_field ) ? $phone_field : '',
-					"email" => $this->checkout_data->get('billingemail')
-				],
-				"billing" => [
-					"firstName" => $this->checkout_data->get('billingfirstname'),
-					"lastName" => $this->checkout_data->get('billinglastname'),
-					"streetAddress" => $this->checkout_data->get('billingaddress'),
-					"locality" => $this->checkout_data->get('billingcity'),
-					"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.billing_region' ), 'code' ),
-					"postalCode" => $this->checkout_data->get('billingpostcode'),
-					"countryCodeAlpha2" => $this->checkout_data->get('billingcountry')
-				],
-				"shipping" => [
-					"firstName" => $this->checkout_data->get('shippingfirstname'),
-					"lastName" => $this->checkout_data->get('shippinglastname'),
-					"streetAddress" => $this->checkout_data->get('shippingaddress'),
-					"locality" => $this->checkout_data->get('shippingcity'),
-					"region" => $shipping_state,
-					"postalCode" => $this->checkout_data->get('shippingpostcode'),
-					"countryCodeAlpha2" => $this->checkout_data->get('shippingcountry')
-				],
-				"options" => [
-				  "submitForSettlement" => true,
-				]
-			]);
-			
-			// In theory all error handling should be done on the client side...?
-			if ( $result->success ) {
-				// Payment complete
-				$order->set( 'processed', WPSC_Purchase_Log::ACCEPTED_PAYMENT )->save();
-				$order->set( 'transactid', $result->transaction->id )->save();
-				$this->go_to_transaction_results();
+			$result = $gateway->transaction()->sale( $params );
+		} else {
+			WPEC_Btree_Helpers::setBraintreeConfiguration();
+			$result = Braintree_Transaction::sale( $params );
+		}
+		
+		// In theory all error handling should be done on the client side...?
+		if ( $result->success ) {
+			// Payment complete
+			$order->set( 'processed', WPSC_Purchase_Log::ACCEPTED_PAYMENT )->save();
+			$order->set( 'transactid', $result->transaction->id )->save();
+			$this->go_to_transaction_results();
+		} else {
+			if ( $result->transaction ) {
+				$order->set( 'processed', WPSC_Purchase_Log::INCOMPLETE_SALE )->save();
+				$error = WPEC_Btree_Helpers::get_failure_status_info( $result, 'message' );
+				WPEC_Btree_Helpers::set_payment_error_message( $error );
+				wp_safe_redirect( $this->get_shopping_cart_payment_url() );
 			} else {
-				if ( $result->transaction ) {
-					$order->set( 'processed', WPSC_Purchase_Log::INCOMPLETE_SALE )->save();
-					$error = WPEC_Btree_Helpers::get_failure_status_info( $result, 'message' );
-					WPEC_Btree_Helpers::set_payment_error_message( $error );
-					wp_safe_redirect( $this->get_shopping_cart_payment_url() );
-				} else {
-					$error = "Payment Error: " . $result->message;
+				$error = "Payment Error: " . $result->message;
 
-					WPEC_Btree_Helpers::set_payment_error_message( $error );
-					wp_safe_redirect( $this->get_shopping_cart_payment_url() );
-				}
+				WPEC_Btree_Helpers::set_payment_error_message( $error );
+				wp_safe_redirect( $this->get_shopping_cart_payment_url() );
 			}
 		}
-
-		// Create a sale transaction with Braintree
-		$result = Braintree_Transaction::sale(array(
-			"amount" => $order->get('totalprice'),
-			"orderId" => $order->get('id'),
-			"paymentMethodNonce" => $payment_method_nonce,
-			"customer" => [
-				"firstName" => $billing_address['first_name'],
-				"lastName" => $billing_address['last_name'],
-				"phone" => $billing_address['phone'],
-				"email" => $email_address
-			],
-			"billing" => [
-				"firstName" => $this->checkout_data->get('billingfirstname'),
-				"lastName" => $this->checkout_data->get('billinglastname'),
-				"streetAddress" => $this->checkout_data->get('billingaddress'),
-				"locality" => $this->checkout_data->get('billingcity'),
-				"region" => wpsc_get_state_by_id( wpsc_get_customer_meta( '_wpsc_cart.billing_region' ), 'code' ),
-				"postalCode" => $this->checkout_data->get('billingpostcode'),
-				"countryCodeAlpha2" => $this->checkout_data->get('billingcountry')
-			],
-			"shipping" => [
-				"firstName" => $this->checkout_data->get('shippingfirstname'),
-				"lastName" => $this->checkout_data->get('shippinglastname'),
-				"streetAddress" => $this->checkout_data->get('shippingaddress'),
-				"locality" => $this->checkout_data->get('shippingcity'),
-				"region" => $shipping_state,
-				"postalCode" => $this->checkout_data->get('shippingpostcode'),
-				"countryCodeAlpha2" => $this->checkout_data->get('shippingcountry')
-			],
-			"options" => [
-			  "submitForSettlement" => true,
-			]
-		));
-
-			// In theory all error handling should be done on the client side...?
-			if ( $result->success ) {
-				// Payment complete
-				$order->set( 'processed', WPSC_Purchase_Log::ACCEPTED_PAYMENT )->save();
-				$order->set( 'transactid', $result->transaction->id )->save();
-				$this->go_to_transaction_results();
-			} else {
-				if ( $result->transaction ) {
-					$order->set( 'processed', WPSC_Purchase_Log::INCOMPLETE_SALE )->save();
-					$error = WPEC_Btree_Helpers::get_failure_status_info( $result, 'message' );
-					WPEC_Btree_Helpers::set_payment_error_message( $error );
-					wp_safe_redirect( $this->get_shopping_cart_payment_url() );
-				} else {
-					$error = "Payment Error: " . $result->message;
-
-					WPEC_Btree_Helpers::set_payment_error_message( $error );
-					wp_safe_redirect( $this->get_shopping_cart_payment_url() );
-				}
-			}
-
 	 	exit();
 	}
 
