@@ -637,7 +637,7 @@ class WPEC_Btree_Helpers {
 	 * @since 1.0.0
 	 * @return string
 	 */
-	public static function is_client_token( $gateway ) {
+	public static function is_client_token( $gateway= '' ) {
 		if ( self::bt_auth_is_connected() ) {
 			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
 
