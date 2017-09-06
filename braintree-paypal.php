@@ -61,7 +61,7 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 	public function process() {
 		global $braintree_settings;
 
-		WPEC_Btree_Helpers::setBraintreeConfiguration();
+		WPEC_Btree_Helpers::setBraintreeConfiguration('braintree-paypal');
 
 		$order = $this->purchase_log;
 		$payment_method_nonce = $_POST['pp_btree_method_nonce'];
@@ -117,7 +117,7 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 
 			$result = $gateway->transaction()->sale( $params );
 		} else {
-			WPEC_Btree_Helpers::setBraintreeConfiguration();
+			WPEC_Btree_Helpers::setBraintreeConfiguration('braintree-paypal');
 			$result = Braintree_Transaction::sale( $params );
 		}
 		
@@ -166,6 +166,14 @@ class WPSC_Payment_Gateway_Braintree_PayPal extends WPSC_Payment_Gateway {
 			</td>
 			<td>
 				<input type="text" name="<?php echo esc_attr( $this->setting->get_field_name( 'private_key' ) ); ?>" value="<?php echo esc_attr( $this->setting->get( 'private_key' ) ); ?>" id="wpsc-anet-trans-key" />
+			</td>
+		</tr>
+		<tr id="bt-pp-manual-merchant-id">
+			<td>
+				<label for="wpsc-worldpay-secure-key"><?php _e( 'Merchant ID', 'wpsc_authorize_net' ); ?></label>
+			</td>
+			<td>
+				<input type="text" name="<?php echo esc_attr( $this->setting->get_field_name( 'merchant_id' ) ); ?>" value="<?php echo esc_attr( $this->setting->get( 'merchant_id' ) ); ?>" id="wpsc-anet-trans-key" />
 			</td>
 		</tr>
 		<tr id="bt-pp-manual-sandbox">

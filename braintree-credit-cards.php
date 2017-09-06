@@ -437,13 +437,21 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 				<input type="text" name="<?php echo esc_attr( $this->setting->get_field_name( 'private_key' ) ); ?>" value="<?php echo esc_attr( $this->setting->get( 'private_key' ) ); ?>" id="wpsc-anet-trans-key" />
 			</td>
 		</tr>
+		<tr id="bt-cc-manual-merchant-id">
+			<td>
+				<label for="wpsc-worldpay-secure-key"><?php _e( 'Merchant ID', 'wpsc_authorize_net' ); ?></label>
+			</td>
+			<td>
+				<input type="text" name="<?php echo esc_attr( $this->setting->get_field_name( 'merchant_id' ) ); ?>" value="<?php echo esc_attr( $this->setting->get( 'merchant_id' ) ); ?>" id="wpsc-anet-trans-key" />
+			</td>
+		</tr>
 		<tr id="bt-cc-manual-sandbox">
 			<td>
 				<label><?php _e( 'Sandbox Mode', 'wpsc_authorize_net' ); ?></label>
 			</td>
 			<td>
-				<label><input <?php checked( $this->setting->get( 'sandbox_cc' ) ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'sandbox_cc' ) ); ?>" value="1" /> <?php _e( 'Yes', 'wpsc_authorize_net' ); ?></label>&nbsp;&nbsp;&nbsp;
-				<label><input <?php checked( (bool) $this->setting->get( 'sandbox_cc' ), false ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'sandbox_cc' ) ); ?>" value="0" /> <?php _e( 'No', 'wpsc_authorize_net' ); ?></label>
+				<label><input <?php checked( $this->setting->get( 'sandbox' ) ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'sandbox' ) ); ?>" value="1" /> <?php _e( 'Yes', 'wpsc_authorize_net' ); ?></label>&nbsp;&nbsp;&nbsp;
+				<label><input <?php checked( (bool) $this->setting->get( 'sandbox' ), false ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'sandbox' ) ); ?>" value="0" /> <?php _e( 'No', 'wpsc_authorize_net' ); ?></label>
 			</td>
 		</tr>
 	<?php

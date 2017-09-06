@@ -64,6 +64,7 @@ class WPEC_Btree_Helpers {
 		add_action( 'admin_enqueue_scripts', array( self::$instance, 'admin_scripts' ) );
 		add_action( 'wp_enqueue_scripts' , array( self::$instance, 'pp_braintree_enqueue_js' ), 100 );
 		add_action( 'wp_head' , array( self::$instance, 'add_css' ), 100 );
+		add_action( 'wpsc_submit_gateway_options', array( self::$instance, 'update_payment_gateway_settings' ), 90 );
 	}
 
 	public static function add_filters() {
@@ -108,7 +109,7 @@ class WPEC_Btree_Helpers {
 			return;
 		}
 
-		if ( ! WPEC_Btree_Helpers::is_gateway_setup( 'braintree-credit-cards' ) || ! WPEC_Btree_Helpers::is_gateway_setup( 'braintree-paypal' ) ) {
+		if ( ! WPEC_Btree_Helpers::is_gateway_setup( 'braintree-credit-cards' ) && ! WPEC_Btree_Helpers::is_gateway_setup( 'braintree-paypal' ) ) {
 			return;
 		}
 
@@ -228,11 +229,24 @@ class WPEC_Btree_Helpers {
 		$settings = new WPSC_Payment_Gateway_Setting( $gateway );
 
 		if ( self::bt_auth_can_connect() && self::bt_auth_is_connected() ) {
-			return true;
+			if ( self::is_client_token( $gateway ) ) {
+				return true;
+			} else {
+				//Disconnect BT auth
+				delete_option( 'wpec_braintree_auth_access_token' );
+				delete_option( 'wpec_braintree_auth_environment' );
+				delete_option( 'wpec_braintree_auth_merchant_id' );
+				return false;
+			}
 		}
 
-		if ( $settings->get( 'public_key' ) && $settings->get( 'private_key' ) ) {
-			return true;
+		if ( $settings->get( 'public_key' ) && $settings->get( 'private_key' ) && $settings->get( 'merchant_id' ) ) {
+
+			if ( self::is_client_token( $gateway ) ) {
+				return true;
+			} else {
+				return false;
+			}
 		}
 
 		return false;
@@ -533,36 +547,22 @@ class WPEC_Btree_Helpers {
 	/**
 	 * Setup the Braintree configuration
 	 */
-	public static function setBraintreeConfiguration() {
+	public static function setBraintreeConfiguration( $gateway = 'braintree-credit-cards' ) {
 		global $merchant_currency, $braintree_settings;
-		// Get setting values
-		$braintree_settings['sandbox_mode']     			= get_option( 'braintree_sandbox_mode' );
-		$braintree_settings['sandbox_private_key'] 			= get_option( 'braintree_sandbox_private_key' );
-		$braintree_settings['sandbox_public_key']  			= get_option( 'braintree_sandbox_public_key' );
-		$braintree_settings['sandbox_merchant_id']			= get_option( 'braintree_sandbox_merchant_id' );
-		$braintree_settings['sandbox_merchant_currency']	= get_option( 'braintree_sandbox_merchant_currency' );
-		$braintree_settings['production_private_key'] 		= get_option( 'braintree_production_private_key' );
-		$braintree_settings['production_public_key']  		= get_option( 'braintree_production_public_key' );
-		$braintree_settings['production_merchant_id']		= get_option( 'braintree_production_merchant_id' );
-		$braintree_settings['production_merchant_currency']	= get_option( 'braintree_production_merchant_currency' );
-		$braintree_settings['settlement_type']     			= get_option( 'braintree_settlement_type' );
-		$braintree_settings['threedee_secure']     			= get_option( 'braintree_threedee_secure' );
-		$braintree_settings['threedee_secure_only']   		= get_option( 'braintree_threedee_secure_only' );
-		// Retrieve the correct Braintree settings, depednign on whether
-		// sandbox mode is turne on or off
-		if ($braintree_settings['sandbox_mode'] == 'on' ) {
-			Braintree_Configuration::environment( 'sandbox' );
-			Braintree_Configuration::merchantId( $braintree_settings['sandbox_merchant_id'] );
-			Braintree_Configuration::publicKey( $braintree_settings['sandbox_public_key'] );
-			Braintree_Configuration::privateKey( $braintree_settings['sandbox_private_key'] );
-			$merchant_currency = $braintree_settings['sandbox_merchant_currency'];
+		
+		if ( $gateway == 'paypal' ) {
+			//Get PayPal Gateway settings
+			$settings = new WPSC_Payment_Gateway_Setting( 'braintree-paypal' );
 		} else {
-			Braintree_Configuration::environment( 'production' );
-			Braintree_Configuration::merchantId( $braintree_settings['production_merchant_id'] );
-			Braintree_Configuration::publicKey( $braintree_settings['production_public_key'] );
-			Braintree_Configuration::privateKey( $braintree_settings['production_private_key'] );
-			$merchant_currency = $braintree_settings['production_merchant_currency'];
+			$settings = new WPSC_Payment_Gateway_Setting( 'braintree-credit-cards' );
 		}
+
+		$sandbox = $settings->get('sandbox') == '1' ? 'sandbox' : 'production';
+		
+		Braintree_Configuration::environment( $sandbox );
+		Braintree_Configuration::merchantId( $settings->get('merchant_id') );
+		Braintree_Configuration::publicKey( $settings->get('public_key') );
+		Braintree_Configuration::privateKey( $settings->get('private_key') );			
 	}
 	
 	/**
@@ -592,7 +592,7 @@ class WPEC_Btree_Helpers {
 				
 				// BT Authentication successful.
 				// Set 3D Secure setting here
-				self::set_3ds_setting();
+				self::is_client_token();
 
 			} else {
 				// Show an error message maybe ?
@@ -637,7 +637,7 @@ class WPEC_Btree_Helpers {
 	 * @since 1.0.0
 	 * @return string
 	 */
-	public static function is_client_token() {
+	public static function is_client_token( $gateway ) {
 		if ( self::bt_auth_is_connected() ) {
 			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
 
@@ -653,7 +653,7 @@ class WPEC_Btree_Helpers {
 			}
 		} else {
 			try {
-				self::setBraintreeConfiguration();
+				self::setBraintreeConfiguration( $gateway );
 				$clientToken = Braintree_ClientToken::generate();
 			}
 			catch ( Braintree_Exception_Configuration $e ) {
@@ -663,21 +663,32 @@ class WPEC_Btree_Helpers {
 				return false;
 			}
 		}
-
-		return isset( $clientToken ) ? $clientToken : false;
-	}
-
-	public static function set_3ds_setting() {
-
-		$token = self::is_client_token();
-		if ( $token ) {
-			$decoded = json_decode( base64_decode( $token ) );
+		
+		if ( $clientToken ) {
+			$decoded = json_decode( base64_decode( $clientToken ) );
 			$three3ds = $decoded->threeDSecureEnabled;
 			$bt_cc = new WPSC_Payment_Gateway_Setting( 'braintree-credit-cards' );
 			if ( true == $three3ds ) {
 				$bt_cc->set('three_d_secure', '1');
 			} else {
 				$bt_cc->set('three_d_secure', '0');
+			}
+		}
+
+		return isset( $clientToken ) ? $clientToken : false;
+	}
+
+	public static function update_payment_gateway_settings() {
+		$gateway = array_keys( $_POST['user_defined_name'] );
+		if ( ! empty( $gateway ) && $gateway[0] == 'braintree-credit-cards' || $gateway[0] == 'braintree-paypal') {
+			if ( $gateway[0] == 'braintree-credit-cards' ) {
+				$token = self::is_client_token( 'braintree-credit-cards' );
+			} else {
+				$token = self::is_client_token('braintree-paypal');				
+			}
+			
+			if ( ! $token ) {
+				// Show some error message
 			}
 		}
 	}
