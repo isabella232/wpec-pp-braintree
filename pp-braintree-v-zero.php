@@ -15,6 +15,9 @@ class WPEC_Btree_Helpers {
 
 	private static $instance;
 
+	/** @var array the admin notices to add */
+	public static $notices = array();
+
 	public function __construct() {
 	}
 
@@ -57,6 +60,7 @@ class WPEC_Btree_Helpers {
 	}
 
 	public static function add_actions() {
+		add_action( 'admin_notices', array( self::$instance, 'admin_notices' ), 15 );
 		add_action( 'admin_init', array( self::$instance, 'handle_auth_connect' ) );
 		add_action( 'admin_init', array( self::$instance, 'handle_auth_disconnect' ) );
 		add_filter( 'wpsc_init', array( self::$instance, 'register_gateways' ) );
@@ -109,7 +113,7 @@ class WPEC_Btree_Helpers {
 			return;
 		}
 
-		if ( ! WPEC_Btree_Helpers::is_gateway_setup( 'braintree-credit-cards' ) && ! WPEC_Btree_Helpers::is_gateway_setup( 'braintree-paypal' ) ) {
+		if ( ! self::is_gateway_setup( 'braintree-credit-cards' ) && ! self::is_gateway_setup( 'braintree-paypal' ) ) {
 			return;
 		}
 
@@ -640,16 +644,17 @@ class WPEC_Btree_Helpers {
 	public static function is_client_token( $gateway= '' ) {
 		if ( self::bt_auth_is_connected() ) {
 			$acc_token = get_option( 'wpec_braintree_auth_access_token' );
-
+			$valid = true;
+			
 			try {
 				$gateway = new Braintree_Gateway( array( 'accessToken' => $acc_token ) );
 				$clientToken = $gateway->clientToken()->generate();
 			}
 			catch ( Braintree\Exception\Authentication $e ) {
-				return false;
+				$valid = false;;
 			}
 			catch ( Braintree_Exception_Configuration $e ) {
-				return false;
+				$valid = false;
 			}
 		} else {
 			try {
@@ -657,13 +662,17 @@ class WPEC_Btree_Helpers {
 				$clientToken = Braintree_ClientToken::generate();
 			}
 			catch ( Braintree_Exception_Configuration $e ) {
-				return false;
+				$valid = false;
 			}
 			catch ( Braintree_Exception_Authentication $e ) {
-				return false;
+				$valid = false;
 			}
 		}
-		
+
+		if ( false == $valid ) {
+			return $valid;
+		}
+
 		if ( $clientToken ) {
 			$decoded = json_decode( base64_decode( $clientToken ) );
 			$three3ds = $decoded->threeDSecureEnabled;
@@ -774,6 +783,18 @@ class WPEC_Btree_Helpers {
 		}
 
 		return isset( $status[ $type] ) ? $status[ $type ] : null;
+	}
+
+	public function admin_notices() {
+		
+		if ( self::is_gateway_setup( 'braintree-credit-cards' ) || self::is_gateway_setup( 'braintree-paypal' ) ) {
+			return;
+		}
+		?>
+		<div class="error notice">
+			<p><?php _e( 'WP eCommerce PayPal powered by Braintree is active but not configured. Please check the Payment gateway settings page', 'wpec-pp-braintree' ); ?></p>
+		</div>
+		<?php
 	}
 }
 add_action( 'wpsc_pre_load', 'WPEC_Btree_Helpers::get_instance' );
