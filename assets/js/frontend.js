@@ -328,7 +328,7 @@
 
 	function wpscCheckSubmitStatus( e ) {
 		var pp_button = $( '.wpsc-checkout-form-button, .wpsc_buy_button' );
-		gateway = $( 'input[name="custom_gateway"]:checked, input[name="custom_gateway"], input[name="wpsc_payment_method"]:checked' ).val();
+		gateway = $( 'input[name="custom_gateway"]:checked, input[name="custom_gateway"]:hidden, input[name="wpsc_payment_method"]:checked' ).val();
 
 		if ( gateway == 'braintree-paypal' ) {
 			if ( e && e.keyCode == 13 ) {
