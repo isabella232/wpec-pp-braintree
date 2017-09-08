@@ -72,7 +72,8 @@ class WPEC_Btree_Helpers {
 	}
 
 	public static function add_filters() {
-		add_filter( 'wpsc_gateway_checkout_form_wpsc_merchant_braintree_v_zero_pp', array( self::$instance, 'pp_braintree_pp_checkout_fields') );		
+		add_filter( 'wpsc_gateway_checkout_form_wpsc_merchant_braintree_v_zero_pp', array( self::$instance, 'pp_braintree_pp_checkout_fields') );
+		add_filter( 'wpsc_gateway_name', array( self::$instance, 'tev1_custom_gateway_name'), 10, 2 );
 	}
 
 	public function init() {
@@ -81,6 +82,18 @@ class WPEC_Btree_Helpers {
 		// Add hidden field to hold token value Tev2
 		add_filter( 'wpsc_get_checkout_payment_method_form_args', array( $this, 'te_v2_insert_hidden_field' ) );
 		//add_action( 'wpsc_default_credit_card_form_end', array( $this, 'te_v2_insert_hidden_field' ) );
+	}
+
+	public function tev1_custom_gateway_name( $name, $gateway ) {
+
+		if ( $gateway['internalname'] == 'braintree-credit-cards' ) {
+			$name = __( 'Cards', 'wpec-pp-braintree' );
+		}
+		
+		if ( $gateway['internalname'] == 'braintree-paypal' ) {
+			$name = __( 'PayPal', 'wpec-pp-braintree' );
+		}
+		return $name;
 	}
 
 	public function te_v1_insert_hidden_field() {
