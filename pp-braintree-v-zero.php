@@ -1,10 +1,10 @@
 <?php
 /*
-Plugin Name: WP eCommerce Braintree V.Zero
-Plugin URI: https://wpecommerce.org/store/
+Plugin Name: WP eCommerce PayPal powered by Braintree Gateway
+Plugin URI: https://wpecommerce.org/store/product/paypal-powered-by-braintree-gateway
 Version: 1.0.0
 Author: WP eCommerce
-Description: A plugin that allows the store owner to process payments using Braintree V.Zero
+Description: Receive credit card or PayPal payments using Paypal Powered by Braintree. A server with cURL, SSL support, and a valid SSL certificate is recommended (for security reasons).
 Author URI:  https://wpecommerce.org
 */
 
@@ -277,11 +277,11 @@ class WPEC_Btree_Helpers {
 			$output .= '<tr class="btpp-braintree-auth">
 							<td>Connect/Disconnect</td>';
 			if ( self::bt_auth_is_connected() ) {
-				$output .= "<td><a href='". esc_url( $connect_url ) . "' class='button-primary'>" . esc_html__( 'Disconnect from PayPal Powered by Braintree', 'wpec-paypal-braintree-vzero' ) . "</a>
-							<p class='small description'>" . __( 'Merchant account: ', 'wp-e-commerce' ) . esc_attr( get_option( 'wpec_braintree_auth_merchant_id' ) ) ."</p></td>";
+				$output .= "<td><a href='". esc_url( $connect_url ) . "' class='button-primary'>" . esc_html__( 'Disconnect from PayPal Powered by Braintree', 'wpec-pp-braintree' ) . "</a>
+							<p class='small description'>" . __( 'Merchant account: ', 'wpec-pp-braintree' ) . esc_attr( get_option( 'wpec_braintree_auth_merchant_id' ) ) ."</p></td>";
 			} else {
 				$output .= "<td><a href='" . esc_url( $connect_url ) . "' class='wpec-braintree-connect-button'><img src='" . esc_url( $button_image_url ) . "'/></a>
-							<p class='small description'><a href='". esc_url( 'https://www.braintreepayments.com/partners/learn-more' ) ."' target='_blank'>" . __( 'Learn More ', 'wp-e-commerce' ) ."</a></p></td>
+							<p class='small description'><a href='". esc_url( 'https://www.braintreepayments.com/partners/learn-more' ) ."' target='_blank'>" . __( 'Learn More ', 'wpec-pp-braintree' ) ."</a></p></td>
 							<td></td>";
 			}
 			$output .= '</tr>';
@@ -597,7 +597,7 @@ class WPEC_Btree_Helpers {
 			}
 			// verify the nonce
 			if ( ! wp_verify_nonce( $nonce, 'connect_paypal_braintree' ) ) {
-				wp_die( __( 'Invalid connection request', 'wpec-paypal-braintree-vzero' ) );
+				wp_die( __( 'Invalid connection request', 'wpec-pp-braintree' ) );
 			}
 			$access_token = isset( $_REQUEST[ 'access_token' ] ) ? sanitize_text_field( base64_decode( $_REQUEST[ 'access_token' ] ) ) : false; 
 			if ( $access_token ) {
@@ -637,7 +637,7 @@ class WPEC_Btree_Helpers {
 		}
 		// verify the nonce
 		if ( ! wp_verify_nonce( $nonce, 'disconnect_paypal_braintree' ) ) {
-			wp_die( __( 'Invalid disconnect request', 'wpec-paypal-braintree-vzero' ) );
+			wp_die( __( 'Invalid disconnect request', 'wpec-pp-braintree' ) );
 		}
 		delete_option( 'wpec_braintree_auth_access_token' );
 		delete_option( 'wpec_braintree_auth_environment' );

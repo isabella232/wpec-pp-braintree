@@ -3,7 +3,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 	
 	public function __construct() {
 		parent::__construct();
-		$this->title            = __( 'PayPal powered by Braintree - Cards', 'wpsc_authorize_net' );
+		$this->title            = __( 'PayPal powered by Braintree - Cards', 'wpec-pp-braintree' );
 		$this->image            = WPSC_URL . '/images/cc.gif';
 		$this->supports         = array( 'default_credit_card_form', 'tokenization', 'tev1', 'auth-capture', 'refunds' );
 		$this->sandbox          = $this->setting->get( 'sandbox' ) == '1' ? true : false;
@@ -33,15 +33,15 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 		unset($fields['card-name-field']);
 
 		$fields['card-number-field'] = '<p class="wpsc-form-row wpsc-form-row-wide wpsc-cc-field">
-				<label for="' . esc_attr( $name ) . '-card-number">' . __( 'Card Number', 'wp-e-commerce' ) . ' <span class="required">*</span></label>
+				<label for="' . esc_attr( $name ) . '-card-number">' . __( 'Card Number', 'wpec-pp-braintree' ) . ' <span class="required">*</span></label>
 				<div id="braintree-credit-cards-card-number" class="bt-hosted-field"></div>
 			</p>';
 		$fields['card-expiry-field'] = '<p class="wpsc-form-row-middle wpsc-cc-field">
-				<label for="' . esc_attr( $name ) . '-card-expiry">' . __( 'Expiration Date', 'wp-e-commerce' ) . ' <span class="required">*</span></label>
+				<label for="' . esc_attr( $name ) . '-card-expiry">' . __( 'Expiration Date', 'wpec-pp-braintree' ) . ' <span class="required">*</span></label>
 				<div id="braintree-credit-cards-card-expiry" class="bt-hosted-field"></div>
 			</p>';
 		$fields['card-cvc-field'] = '<p class="wpsc-form-row-last wpsc-cc-field">
-				<label for="' . esc_attr( $name ) . '-card-cvc">' . __( 'Card Code', 'wp-e-commerce' ) . ' <span class="required">*</span></label>
+				<label for="' . esc_attr( $name ) . '-card-cvc">' . __( 'Card Code', 'wpec-pp-braintree' ) . ' <span class="required">*</span></label>
 				<div id="braintree-credit-cards-card-cvc" class="bt-hosted-field"></div></td>
 			</p>';
 
@@ -65,15 +65,15 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 		unset( $fields['card-name-field'] );
 
 		$fields['card-number-field'] = '<tr><td class="wpsc-form-row wpsc-form-row-wide wpsc-cc-field">
-					<label for="' . esc_attr( $name ) . '-card-number">' . __( 'Card Number', 'wp-e-commerce' ) . ' <span class="required">*</span></label></td>
+					<label for="' . esc_attr( $name ) . '-card-number">' . __( 'Card Number', 'wpec-pp-braintree' ) . ' <span class="required">*</span></label></td>
 					<td><div id="braintree-credit-cards-card-number" class="bt-hosted-field"></div></td>
 				</tr>';
 		$fields['card-expiry-field'] = '<tr><td class="wpsc-form-row-middle wpsc-cc-field">
-					<label for="' . esc_attr( $name ) . '-card-expiry">' . __( 'Expiration Date', 'wp-e-commerce' ) . ' <span class="required">*</span></label></td>
+					<label for="' . esc_attr( $name ) . '-card-expiry">' . __( 'Expiration Date', 'wpec-pp-braintree' ) . ' <span class="required">*</span></label></td>
 					<td><div id="braintree-credit-cards-card-expiry" class="bt-hosted-field"></div></td>
 				</tr>';
 		$fields['card-cvc-field'] = '<tr><td class="wpsc-form-row-last wpsc-cc-field">
-					<label for="' . esc_attr( $name ) . '-card-cvc">' . __( 'Card Code', 'wp-e-commerce' ) . ' <span class="required">*</span></label></td>
+					<label for="' . esc_attr( $name ) . '-card-cvc">' . __( 'Card Code', 'wpec-pp-braintree' ) . ' <span class="required">*</span></label></td>
 					<td><div id="braintree-credit-cards-card-cvc" class="bt-hosted-field"></div></td>
 				</tr>';
 
@@ -126,7 +126,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 
 		if ( ! $threedcheck ) {
 			// 3DS check failed so return;
-			$error = __( '3D Secure verification failed.', 'wp-e-commerce' );
+			$error = __( '3D Secure verification failed.', 'wpec-pp-braintree' );
 			$order->set( 'processed', WPSC_Purchase_Log::INCOMPLETE_SALE )->save();
 			$order->add_note( $error );
 			WPEC_Btree_Helpers::set_payment_error_message( $error );
@@ -201,7 +201,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 			if ( false === $submit_for_settlement ) {
 				// Order is authorized
 				$order->set( 'bt_order_status' , 'Open' )->save();
-				$order->add_note( __( 'Order opened. Capture the payment below.', 'wp-e-commerce' ) )->save();
+				$order->add_note( __( 'Order opened. Capture the payment below.', 'wpec-pp-braintree' ) )->save();
 			}
 
 			$this->go_to_transaction_results();
@@ -338,7 +338,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 					// Set a log meta entry, and save log before adding refund note.
 					$log->set( 'processed', WPSC_Purchase_Log::INCOMPLETE_SALE )->save();
 					$log->set( 'total_order_refunded' , $log->get( 'totalprice' ) )->save();
-					$log->add_note( __( 'Authorization voided.', 'wp-e-commerce' ) )->save();
+					$log->add_note( __( 'Authorization voided.', 'wpec-pp-braintree' ) )->save();
 					$log->set( 'bt_order_status', 'Voided' )->save();
 
 					remove_action( 'wpsc_order_fully_refunded', 'wpsc_update_order_status_fully_refunded' );
@@ -351,19 +351,19 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 			// End Void code block
 
 			if ( 0.00 == $amount ) {
-				return new WP_Error( 'braintree_credit_cards_refund_error', __( 'Refund Error: You need to specify a refund amount.', 'wp-e-commerce' ) );
+				return new WP_Error( 'braintree_credit_cards_refund_error', __( 'Refund Error: You need to specify a refund amount.', 'wpec-pp-braintree' ) );
 			}
 
 			$log = wpsc_get_order( $log );
 
 			if ( ! $log->get( 'transactid' ) ) {
-				return new WP_Error( 'error', __( 'Refund Failed: No transaction ID', 'wp-e-commerce' ) );
+				return new WP_Error( 'error', __( 'Refund Failed: No transaction ID', 'wpec-pp-braintree' ) );
 			}
 
 			$max_refund  = $log->get( 'totalprice' ) - $log->get_total_refunded();
 
 			if ( $amount && $max_refund < $amount || 0 > $amount ) {
-				throw new Exception( __( 'Invalid refund amount', 'wp-e-commerce' ) );
+				throw new Exception( __( 'Invalid refund amount', 'wpec-pp-braintree' ) );
 			}
 
 			if ( $manual ) {
@@ -374,7 +374,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 				$log->set( 'bt_order_status', 'Refunded' )->save();
 
 				$log->add_refund_note(
-					sprintf( __( 'Refunded %s via Manual Refund', 'wp-e-commerce' ), wpsc_currency_display( $amount ) ),
+					sprintf( __( 'Refunded %s via Manual Refund', 'wpec-pp-braintree' ), wpsc_currency_display( $amount ) ),
 					$reason
 				);
 
@@ -418,12 +418,12 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 		<!-- Account Credentials -->
 		<tr id="bt-cc-manual-header">
 			<td colspan="2">
-				<h4><?php _e( 'Account Credentials', 'wpsc_authorize_net' ); ?></h4>
+				<h4><?php _e( 'Account Credentials', 'wpec-pp-braintree' ); ?></h4>
 			</td>
 		</tr>
 		<tr id="bt-cc-manual-public-key">
 			<td>
-				<label for="wpsc-worldpay-secure-net-id"><?php _e( 'Public Key', 'wpsc_authorize_net' ); ?></label>
+				<label for="wpsc-worldpay-secure-net-id"><?php _e( 'Public Key', 'wpec-pp-braintree' ); ?></label>
 			</td>
 			<td>
 				<input type="text" name="<?php echo esc_attr( $this->setting->get_field_name( 'public_key' ) ); ?>" value="<?php echo esc_attr( $this->setting->get( 'public_key' ) ); ?>" id="wpsc-anet-api-id" />
@@ -431,7 +431,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 		</tr>
 		<tr id="bt-cc-manual-private-key">
 			<td>
-				<label for="wpsc-worldpay-secure-key"><?php _e( 'Private Key', 'wpsc_authorize_net' ); ?></label>
+				<label for="wpsc-worldpay-secure-key"><?php _e( 'Private Key', 'wpec-pp-braintree' ); ?></label>
 			</td>
 			<td>
 				<input type="text" name="<?php echo esc_attr( $this->setting->get_field_name( 'private_key' ) ); ?>" value="<?php echo esc_attr( $this->setting->get( 'private_key' ) ); ?>" id="wpsc-anet-trans-key" />
@@ -439,7 +439,7 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 		</tr>
 		<tr id="bt-cc-manual-merchant-id">
 			<td>
-				<label for="wpsc-worldpay-secure-key"><?php _e( 'Merchant ID', 'wpsc_authorize_net' ); ?></label>
+				<label for="wpsc-worldpay-secure-key"><?php _e( 'Merchant ID', 'wpec-pp-braintree' ); ?></label>
 			</td>
 			<td>
 				<input type="text" name="<?php echo esc_attr( $this->setting->get_field_name( 'merchant_id' ) ); ?>" value="<?php echo esc_attr( $this->setting->get( 'merchant_id' ) ); ?>" id="wpsc-anet-trans-key" />
@@ -447,11 +447,11 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 		</tr>
 		<tr id="bt-cc-manual-sandbox">
 			<td>
-				<label><?php _e( 'Sandbox Mode', 'wpsc_authorize_net' ); ?></label>
+				<label><?php _e( 'Sandbox Mode', 'wpec-pp-braintree' ); ?></label>
 			</td>
 			<td>
-				<label><input <?php checked( $this->setting->get( 'sandbox' ) ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'sandbox' ) ); ?>" value="1" /> <?php _e( 'Yes', 'wpsc_authorize_net' ); ?></label>&nbsp;&nbsp;&nbsp;
-				<label><input <?php checked( (bool) $this->setting->get( 'sandbox' ), false ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'sandbox' ) ); ?>" value="0" /> <?php _e( 'No', 'wpsc_authorize_net' ); ?></label>
+				<label><input <?php checked( $this->setting->get( 'sandbox' ) ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'sandbox' ) ); ?>" value="1" /> <?php _e( 'Yes', 'wpec-pp-braintree' ); ?></label>&nbsp;&nbsp;&nbsp;
+				<label><input <?php checked( (bool) $this->setting->get( 'sandbox' ), false ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'sandbox' ) ); ?>" value="0" /> <?php _e( 'No', 'wpec-pp-braintree' ); ?></label>
 			</td>
 		</tr>
 	<?php
@@ -467,69 +467,69 @@ class WPSC_Payment_Gateway_Braintree_Credit_Cards extends WPSC_Payment_Gateway {
 	?>
 		<tr>
 			<td colspan="2">
-				<h4><?php _e( 'Transaction Settings', 'wpsc_authorize_net' ); ?></h4>
+				<h4><?php _e( 'Transaction Settings', 'wpec-pp-braintree' ); ?></h4>
 			</td>
 		</tr>
 		<tr>
 			<td>
-				<label for="wpsc-worldpay-secure-key"><?php _e( 'Settlement Type', 'wpsc_authorize_net' ); ?></label>
+				<label for="wpsc-worldpay-secure-key"><?php _e( 'Settlement Type', 'wpec-pp-braintree' ); ?></label>
 			</td>
 			<td>
 				<select id="wpsc-worldpay-payment-capture" name="<?php echo esc_attr( $this->setting->get_field_name( 'settlement' ) ); ?>">
-					<option value='upfront' <?php selected( 'upfront', $this->setting->get( 'settlement' ) ); ?>><?php _e( 'Upfront Settlement', 'wpec-square' )?></option>
-					<option value='deferred' <?php selected( 'deferred', $this->setting->get( 'settlement' ) ); ?>><?php _e( 'Deferred Settlement', 'wpec-square' )?></option>
+					<option value='upfront' <?php selected( 'upfront', $this->setting->get( 'settlement' ) ); ?>><?php _e( 'Upfront Settlement', 'wpec-pp-braintree' )?></option>
+					<option value='deferred' <?php selected( 'deferred', $this->setting->get( 'settlement' ) ); ?>><?php _e( 'Deferred Settlement', 'wpec-pp-braintree' )?></option>
 				</select>
 			</td>
 		</tr>
 		<tr>
 			<td colspan="2">
-				<h4><?php _e( '3D Secure Settings', 'wpsc_authorize_net' ); ?></h4>
+				<h4><?php _e( '3D Secure Settings', 'wpec-pp-braintree' ); ?></h4>
 			</td>
 		</tr>		
 		<tr>
 			<td>
-				<label for="wpsc-worldpay-secure-key"><?php _e( '3D Secure Enabled', 'wpsc_authorize_net' ); ?></label>
+				<label for="wpsc-worldpay-secure-key"><?php _e( '3D Secure Enabled', 'wpec-pp-braintree' ); ?></label>
 			</td>
 			<td>
-				<label><input <?php checked( $this->setting->get( 'three_d_secure' ) ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'three_d_secure' ) ); ?>" value="1" disabled /> <?php _e( 'Yes', 'wpec-square' ); ?></label>&nbsp;&nbsp;&nbsp;
-				<label><input <?php checked( (bool) $this->setting->get( 'three_d_secure' ), false ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'three_d_secure' ) ); ?>" value="0" disabled /> <?php _e( 'No', 'wpec-square' ); ?></label>
+				<label><input <?php checked( $this->setting->get( 'three_d_secure' ) ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'three_d_secure' ) ); ?>" value="1" disabled /> <?php _e( 'Yes', 'wpec-pp-braintree' ); ?></label>&nbsp;&nbsp;&nbsp;
+				<label><input <?php checked( (bool) $this->setting->get( 'three_d_secure' ), false ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'three_d_secure' ) ); ?>" value="0" disabled /> <?php _e( 'No', 'wpec-pp-braintree' ); ?></label>
 				<p class="description"><?php _e( 'You can change 3D Secure settings from within your Braintree account settings.', 'wpsc' ); ?></p>
 			</td>
 		</tr>
 		<tr>
 			<td>
-				<label for="wpsc-worldpay-secure-key"><?php _e( 'Allow only 3D Secure', 'wpsc_authorize_net' ); ?></label>
+				<label for="wpsc-worldpay-secure-key"><?php _e( 'Allow only 3D Secure', 'wpec-pp-braintree' ); ?></label>
 			</td>
 			<td>
-				<label><input <?php checked( $this->setting->get( 'three_d_secure_only' ) ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'three_d_secure_only' ) ); ?>" value="1" /> <?php _e( 'Yes', 'wpec-square' ); ?></label>&nbsp;&nbsp;&nbsp;
-				<label><input <?php checked( (bool) $this->setting->get( 'three_d_secure_only' ), false ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'three_d_secure_only' ) ); ?>" value="0" /> <?php _e( 'No', 'wpec-square' ); ?></label>
+				<label><input <?php checked( $this->setting->get( 'three_d_secure_only' ) ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'three_d_secure_only' ) ); ?>" value="1" /> <?php _e( 'Yes', 'wpec-pp-braintree' ); ?></label>&nbsp;&nbsp;&nbsp;
+				<label><input <?php checked( (bool) $this->setting->get( 'three_d_secure_only' ), false ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'three_d_secure_only' ) ); ?>" value="0" /> <?php _e( 'No', 'wpec-pp-braintree' ); ?></label>
 				<p class="description"><?php _e( 'Only transactions that pass 3D Secure verifications are allowed to be processed', 'wpsc' ); ?></p>
 			</td>
 		</tr>		
 		<tr>
 			<td>
-				<label for="wpsc-worldpay-payment-capture"><?php _e( '3D Secure Risk Settings', 'wpec-square' ); ?></label>
+				<label for="wpsc-worldpay-payment-capture"><?php _e( '3D Secure Risk Settings', 'wpec-pp-braintree' ); ?></label>
 			</td>
 			<td>
 				<select id="wpsc-worldpay-payment-capture" name="<?php echo esc_attr( $this->setting->get_field_name( 'three_d_secure_risk' ) ); ?>">
-					<option value='standard' <?php selected( 'standard', $this->setting->get( 'three_d_secure_risk' ) ); ?>><?php _e( 'Standard', 'wpec-square' )?></option>
-					<option value='strict' <?php selected( 'strict', $this->setting->get( 'three_d_secure_risk' ) ); ?>><?php _e( 'Strict', 'wpec-square' )?></option>
+					<option value='standard' <?php selected( 'standard', $this->setting->get( 'three_d_secure_risk' ) ); ?>><?php _e( 'Standard', 'wpec-pp-braintree' )?></option>
+					<option value='strict' <?php selected( 'strict', $this->setting->get( 'three_d_secure_risk' ) ); ?>><?php _e( 'Strict', 'wpec-pp-braintree' )?></option>
 				</select>
 			</td>
 		</tr>
 		<!-- Error Logging -->
 		<tr>
 			<td colspan="2">
-				<h4><?php _e( 'Error Logging', 'wpec-square' ); ?></h4>
+				<h4><?php _e( 'Error Logging', 'wpec-pp-braintree' ); ?></h4>
 			</td>
 		</tr>
 		<tr>
 			<td>
-				<label><?php _e( 'Enable Debugging', 'wpec-square' ); ?></label>
+				<label><?php _e( 'Enable Debugging', 'wpec-pp-braintree' ); ?></label>
 			</td>
 			<td>
-				<label><input <?php checked( $this->setting->get( 'debugging' ) ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'debugging' ) ); ?>" value="1" /> <?php _e( 'Yes', 'wpsc_authorize_net' ); ?></label>&nbsp;&nbsp;&nbsp;
-				<label><input <?php checked( (bool) $this->setting->get( 'debugging' ), false ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'debugging' ) ); ?>" value="0" /> <?php _e( 'No', 'wpsc_authorize_net' ); ?></label>
+				<label><input <?php checked( $this->setting->get( 'debugging' ) ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'debugging' ) ); ?>" value="1" /> <?php _e( 'Yes', 'wpec-pp-braintree' ); ?></label>&nbsp;&nbsp;&nbsp;
+				<label><input <?php checked( (bool) $this->setting->get( 'debugging' ), false ); ?> type="radio" name="<?php echo esc_attr( $this->setting->get_field_name( 'debugging' ) ); ?>" value="0" /> <?php _e( 'No', 'wpec-pp-braintree' ); ?></label>
 			</td>
 		</tr>
 	<?php
