@@ -688,16 +688,18 @@ class WPEC_Btree_Helpers {
 	}
 
 	public static function update_payment_gateway_settings() {
-		$gateway = array_keys( $_POST['user_defined_name'] );
-		if ( ! empty( $gateway ) && $gateway[0] == 'braintree-credit-cards' || $gateway[0] == 'braintree-paypal') {
-			if ( $gateway[0] == 'braintree-credit-cards' ) {
-				$token = self::is_client_token( 'braintree-credit-cards' );
-			} else {
-				$token = self::is_client_token('braintree-paypal');				
-			}
-			
-			if ( ! $token ) {
-				// Show some error message
+		if ( isset( $_POST['user_defined_name'] ) && $_POST['user_defined_name'] ) {
+			$gateway = array_keys( $_POST['user_defined_name'] );
+			if ( ! empty( $gateway ) && $gateway[0] == 'braintree-credit-cards' || $gateway[0] == 'braintree-paypal') {
+				if ( $gateway[0] == 'braintree-credit-cards' ) {
+					$token = self::is_client_token( 'braintree-credit-cards' );
+				} else {
+					$token = self::is_client_token('braintree-paypal');				
+				}
+				
+				if ( ! $token ) {
+					// Show some error message
+				}
 			}
 		}
 	}
