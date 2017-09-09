@@ -4,7 +4,7 @@ Plugin Name: WP eCommerce PayPal powered by Braintree Gateway
 Plugin URI: https://wpecommerce.org/store/product/paypal-powered-by-braintree-gateway
 Version: 1.0.0
 Author: WP eCommerce
-Description: Receive credit card or PayPal payments using Paypal Powered by Braintree. A server with cURL, SSL support, and a valid SSL certificate is recommended (for security reasons).
+Description: Receive credit card or PayPal payments using Paypal Powered by Braintree. A server with cURL, SSL support, and a valid SSL certificate is recommended (for security reasons). Documentation: <a href="http://docs.wpecommerce.org/paypal-powered-by-braintree/" target="_blank">Documentation</a>
 Author URI:  https://wpecommerce.org
 */
 
@@ -45,8 +45,12 @@ class WPEC_Btree_Helpers {
 			define( 'WPEC_PPBRAINTREE_VZERO_PLUGIN_FILE', __FILE__ );
 		}
 
-		if ( ! defined( 'WPEC_PPBRAINTREE_VZERO_VERSION' ) ) {
-			define( 'WPEC_PPBRAINTREE_VZERO_VERSION', '1.0.0' );
+		if ( ! defined( 'WPEC_PPBRAINTREE_VERSION' ) ) {
+			define( 'WPEC_PPBRAINTREE_VERSION', '1.0.0' );
+		}
+
+		if ( ! defined( 'WPEC_PPBRAINTREE_PRODUCT_ID' ) ) {
+			define( 'WPEC_PPBRAINTREE_PRODUCT_ID', 481753 );
 		}
 	}
 
@@ -63,6 +67,7 @@ class WPEC_Btree_Helpers {
 		add_action( 'admin_notices', array( self::$instance, 'admin_notices' ), 15 );
 		add_action( 'admin_init', array( self::$instance, 'handle_auth_connect' ) );
 		add_action( 'admin_init', array( self::$instance, 'handle_auth_disconnect' ) );
+		add_action( 'admin_init', array( self::$instance, 'plugin_updater' ), 0 );
 		add_filter( 'wpsc_init', array( self::$instance, 'register_gateways' ) );
 		add_action( 'wpsc_loaded', array( self::$instance, 'init' ), 2 );
 		add_action( 'admin_enqueue_scripts', array( self::$instance, 'admin_scripts' ) );
@@ -810,6 +815,25 @@ class WPEC_Btree_Helpers {
 			<p><?php _e( 'WP eCommerce PayPal powered by Braintree is active but not configured. Please check the Payment gateway settings page', 'wpec-pp-braintree' ); ?></p>
 		</div>
 		<?php
+	}
+	
+	public function plugin_updater() {
+		// setup the updater
+		if( ! class_exists( 'WPEC_Product_Licensing_Updater' ) ) {
+			// load our custom updater
+			include( dirname( __FILE__ ) . '/WPEC_Product_Licensing_Updater.php' );
+		}
+
+		// retrieve our license key from the DB
+		$license = get_option( 'wpec_product_'. WPEC_PPBRAINTREE_PRODUCT_ID .'_license_active' );
+		$key = ! $license ? '' : $license->license_key;
+		// setup the updater
+		$wpec_updater = new WPEC_Product_Licensing_Updater( 'https://wpecommerce.org', __FILE__, array(
+				'version' 	=> WPEC_PPBRAINTREE_VERSION, // current version number
+				'license' 	=> $key, // license key (used get_option above to retrieve from DB)
+				'item_id' 	=> WPEC_PPBRAINTREE_PRODUCT_ID 	// id of this plugin
+			)
+		);		
 	}
 }
 add_action( 'wpsc_pre_load', 'WPEC_Btree_Helpers::get_instance' );
