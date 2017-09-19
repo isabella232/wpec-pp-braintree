@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * Allows plugins to use their own update API.
  *
  * @author Easy Digital Downloads
- * @version 1.6.13
+ * @version 1.6.14
  */
 class WPEC_Product_Licensing_Updater {
 
@@ -43,11 +43,8 @@ class WPEC_Product_Licensing_Updater {
 		$this->beta        = ! empty( $this->api_data['beta'] ) ? true : false;
 		$this->cache_key   = md5( serialize( $this->slug . $this->api_data['license'] . $this->beta ) );
 
-		$edd_plugin_data[ $this->slug ] = $this->api_data;
-
 		// Set up hooks.
 		$this->init();
-
 	}
 
 	/**
@@ -129,10 +126,6 @@ class WPEC_Product_Licensing_Updater {
 
 				$_transient_data->response[ $this->name ] = $version_info;
 
-			} else {
-
-				$_transient_data->response[ $this->name ][ 'slug' ] = $this->slug;
-
 			}
 
 			$_transient_data->last_checked           = current_time( 'timestamp' );
@@ -200,9 +193,7 @@ class WPEC_Product_Licensing_Updater {
 			set_site_transient( 'update_plugins', $update_cache );
 
 		} else {
-
 			$version_info = $update_cache->response[ $this->name ];
-
 		}
 
 		// Restore our filter
@@ -221,7 +212,7 @@ class WPEC_Product_Licensing_Updater {
 
 			if ( empty( $version_info->download_link ) ) {
 				printf(
-					__( 'There is a new version of %1$s available. %2$sView version %3$s details%4$s.', 'wpec-licensing' ),
+					__( 'There is a new version of %1$s available. %2$sView version! %3$s details%4$s.', 'wpec-licensing' ),
 					esc_html( $version_info->name ),
 					'<a target="_blank" class="thickbox" href="' . esc_url( $changelog_link ) . '">',
 					esc_html( $version_info->new_version ),
@@ -229,7 +220,7 @@ class WPEC_Product_Licensing_Updater {
 				);
 			} else {
 				printf(
-					__( 'There is a new version of %1$s available. %2$sView version %3$s details%4$s or %5$supdate now%6$s.', 'wpec-licensing' ),
+					__( 'There is a new version of %1$s available. %2$sView version@ %3$s details%4$s or %5$supdate now%6$s.', 'wpec-licensing' ),
 					esc_html( $version_info->name ),
 					'<a target="_blank" class="thickbox" href="' . esc_url( $changelog_link ) . '">',
 					esc_html( $version_info->new_version ),
@@ -495,7 +486,7 @@ class WPEC_Product_Licensing_Updater {
 			'value'   => json_encode( $value )
 		);
 
-		update_option( $cache_key, $data );
+		update_option( $cache_key, $data, 'no' );
 
 	}
 

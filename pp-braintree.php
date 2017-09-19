@@ -2,7 +2,7 @@
 /*
 Plugin Name: WP eCommerce PayPal powered by Braintree Gateway
 Plugin URI: https://wpecommerce.org/store/product/paypal-powered-by-braintree-gateway
-Version: 1.0.0
+Version: 1.1
 Author: WP eCommerce
 Description: Receive credit card or PayPal payments using Paypal Powered by Braintree. A server with cURL, SSL support, and a valid SSL certificate is recommended (for security reasons). Documentation: <a href="http://docs.wpecommerce.org/paypal-powered-by-braintree/" target="_blank">Documentation</a>
 Author URI:  https://wpecommerce.org
@@ -46,7 +46,7 @@ class WPEC_Btree_Helpers {
 		}
 
 		if ( ! defined( 'WPEC_PPBRAINTREE_VERSION' ) ) {
-			define( 'WPEC_PPBRAINTREE_VERSION', '1.0.0' );
+			define( 'WPEC_PPBRAINTREE_VERSION', '1.1' );
 		}
 
 		if ( ! defined( 'WPEC_PPBRAINTREE_PRODUCT_ID' ) ) {
@@ -372,7 +372,7 @@ class WPEC_Btree_Helpers {
 	public static function bt_auth_can_connect() {
 		$base_country = new WPSC_Country( wpsc_get_base_country() );
 
-		return in_array( $base_country->get_isocode(), array( 'US', 'UK', 'FR' ) );
+		return in_array( $base_country->get_isocode(), array( 'US', 'UK', 'FR', 'GB' ) );
 	}
 
 	public static function bt_auth_is_connected() {
