@@ -744,10 +744,10 @@ class WPEC_Btree_Helpers {
 	 * @since 1.0.0
 	 * @return string
 	 */
-	public function get_auth_environment() {
+	public static function get_auth_environment() {
 		$environment = false;
 
-		if ( $this->bt_auth_is_connected() ) {
+		if ( self::bt_auth_is_connected() ) {
 			$environment = get_option( 'wpec_braintree_auth_environment', 'production' );
 		}
 
