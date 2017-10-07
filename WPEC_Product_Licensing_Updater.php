@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * Allows plugins to use their own update API.
  *
  * @author Easy Digital Downloads
- * @version 1.6.14
+ * @version 1.6.15
  */
 class WPEC_Product_Licensing_Updater {
 
@@ -41,7 +41,7 @@ class WPEC_Product_Licensing_Updater {
 		$this->version     = $_api_data['version'];
 		$this->wp_override = isset( $_api_data['wp_override'] ) ? (bool) $_api_data['wp_override'] : false;
 		$this->beta        = ! empty( $this->api_data['beta'] ) ? true : false;
-		$this->cache_key   = md5( serialize( $this->slug . $this->api_data['license'] . $this->beta ) );
+		$this->cache_key   = 'wpec_sl_' . md5( serialize( $this->slug . $this->api_data['license'] . $this->beta ) );
 
 		// Set up hooks.
 		$this->init();
@@ -77,7 +77,7 @@ class WPEC_Product_Licensing_Updater {
 
 		$license = get_option( 'wpec_product_' . $this->api_data['item_id'] . '_license_active' );
 		if( ( ! is_object( $license ) || 'valid' !== $license->license ) && empty( $showed_imissing_key_message[ $this->name ] ) ) {
-			echo '&nbsp;<strong><a href="' . esc_url( admin_url( 'index.php?page=wpsc-upgrades' ) ) . '">' . __( 'Enter valid license key for automatic updates.', 'wp-e-commerce' ) . '</a></strong>';
+			echo '&nbsp;<strong><a href="' . esc_url( admin_url( 'index.php?page=wpsc-upgrades' ) ) . '">' . __( 'Enter valid license key for automatic updates.', 'wpec-licensing' ) . '</a></strong>';
 			$showed_imissing_key_message[ $this->name ] = true;
 		}
 	}
@@ -272,10 +272,10 @@ class WPEC_Product_Licensing_Updater {
 		$cache_key = 'wpec_lic_api_request_' . md5( serialize( $this->slug . $this->api_data['license'] . $this->beta ) );
 
 		// Get the transient where we store the api request for this plugin for 24 hours
-		$edd_api_request_transient = $this->get_cached_version_info( $cache_key );
+		$wpec_api_request_transient = $this->get_cached_version_info( $cache_key );
 
 		//If we have no transient-saved value, run the API, set a fresh transient with the API value, and return that value too right now.
-		if ( empty( $edd_api_request_transient ) ){
+		if ( empty( $wpec_api_request_transient ) ) {
 
 			$api_response = $this->api_request( 'plugin_information', $to_send );
 
@@ -287,7 +287,7 @@ class WPEC_Product_Licensing_Updater {
 			}
 
 		} else {
-			$_data = $edd_api_request_transient;
+			$_data = $wpec_api_request_transient;
 		}
 
 		// Convert sections into an associative array, since we're getting an object, but Core expects an array.
@@ -434,7 +434,6 @@ class WPEC_Product_Licensing_Updater {
 			if ( ! is_wp_error( $request ) ) {
 				$version_info = json_decode( wp_remote_retrieve_body( $request ) );
 			}
-
 
 			if ( ! empty( $version_info ) && isset( $version_info->sections ) ) {
 				$version_info->sections = maybe_unserialize( $version_info->sections );
